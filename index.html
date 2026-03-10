@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GoalKick - Booking Futsal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+<style>
+body{
+font-family:'Poppins',sans-serif;
+}
+</style>
+
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+<!-- NAVBAR -->
+
+<nav class="fixed w-full z-50 backdrop-blur-lg bg-white/30 border-b border-white/20">
+
+<div class="max-w-7xl mx-auto px-6">
+
+<div class="flex justify-between items-center h-16">
+
+<h1 class="text-2xl font-bold text-blue-600">
+GoalKick
+</h1>
+
+<!-- MENU DESKTOP -->
+<div class="hidden md:flex space-x-8 font-medium">
+
+<a href="index.html" class="hover:text-blue-600">Home</a>
+<a href="gallery.html" class="hover:text-blue-600">Gallery</a>
+<a href="tentang.html" class="hover:text-blue-600">Tentang</a>
+
+</div>
+
+<!-- BUTTON BOOKING DESKTOP -->
+<a href="booking.html"
+class="hidden md:block bg-gradient-to-r from-blue-600 to-red-500 text-white px-5 py-2 rounded-lg shadow hover:scale-105 transition">
+
+Booking
+
+</a>
+
+<!-- HAMBURGER MOBILE -->
+<button id="menuBtn" class="md:hidden text-2xl">
+
+☰
+
+</button>
+
+</div>
+
+</div>
+
+<!-- MOBILE MENU -->
+
+<div id="mobileMenu" class="hidden md:hidden bg-white shadow-lg">
+
+<a href="index.html" class="block px-6 py-3 border-b hover:bg-gray-100">Home</a>
+
+<a href="gallery.html" class="block px-6 py-3 border-b hover:bg-gray-100">Gallery</a>
+
+<a href="tentang.html" class="block px-6 py-3 border-b hover:bg-gray-100">Tentang</a>
+
+<a href="booking.html" class="block px-6 py-3 bg-blue-600 text-white text-center">
+
+Booking
+
+</a>
+
+</div>
+
+</nav>
+
+<div class="max-w-7xl mx-auto px-6">
+
+<div class="flex justify-between items-center h-16">
+
+<h1 class="text-2xl font-bold text-blue-600">
+GoalKick
+</h1>
+
+<!-- MENU -->
+
+<div class="hidden md:flex space-x-8 font-medium">
+
+<a href="index.html" class="hover:text-blue-600">Home</a>
+
+<a href="gallery.html" class="hover:text-blue-600">Gallery</a>
+
+<a href="tentang.html" class="hover:text-blue-600">Tentang</a>
+
+</div>
+
+<!-- BUTTON BOOKING -->
+
+<a href="booking.html"
+class="bg-gradient-to-r from-blue-600 to-red-500 text-white px-5 py-2 rounded-lg shadow hover:scale-105 transition">
+
+Booking
+
+</a>
+
+</div>
+
+</div>
+
+</nav>
+
+
+<!-- HERO -->
+
+<section class="pt-32 pb-24 bg-gradient-to-r from-blue-600 via-purple-600 to-red-500 text-white">
+
+<div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+
+<div data-aos="fade-right">
+
+<h1 class="text-4xl md:text-5xl font-bold leading-tight">
+
+Booking Lapangan Futsal  
+<span class="text-yellow-300">Tanpa Bentrok Jadwal</span>
+
+</h1>
+
+<p class="mt-6 text-lg text-gray-200">
+
+GoalKick adalah sistem booking futsal modern yang membantu mengecek slot kosong, melakukan reservasi online, serta menghasilkan laporan otomatis.
+
+</p>
+
+</div>
+
+<div data-aos="fade-left">
+
+<img src="https://cdn-icons-png.flaticon.com/512/857/857455.png"
+class="w-64 md:w-full mx-auto">
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- MASALAH -->
+
+<section class="py-20">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<h2 class="text-3xl md:text-4xl font-bold text-center mb-14">
+Masalah Yang Sering Terjadi
+</h2>
+
+<div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+<div data-aos="zoom-in"
+class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition">
+
+<h3 class="font-semibold text-lg">Jadwal Bentrok</h3>
+
+<p class="text-gray-500 mt-2">
+Sering terjadi double booking karena pencatatan manual.
+</p>
+
+</div>
+
+<div data-aos="zoom-in"
+class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition">
+
+<h3 class="font-semibold text-lg">Cek Slot Sulit</h3>
+
+<p class="text-gray-500 mt-2">
+Sulit mengetahui waktu lapangan yang masih kosong.
+</p>
+
+</div>
+
+<div data-aos="zoom-in"
+class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition">
+
+<h3 class="font-semibold text-lg">Pencatatan Manual</h3>
+
+<p class="text-gray-500 mt-2">
+Semua reservasi masih dicatat di buku.
+</p>
+
+</div>
+
+<div data-aos="zoom-in"
+class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition">
+
+<h3 class="font-semibold text-lg">Laporan Tidak Jelas</h3>
+
+<p class="text-gray-500 mt-2">
+Pendapatan sulit direkap secara manual.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- FITUR -->
+
+<section class="py-20 bg-gray-100">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<h2 class="text-3xl md:text-4xl font-bold text-center mb-14">
+Fitur Sistem
+</h2>
+
+<div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+<div data-aos="fade-up"
+class="bg-white p-8 rounded-xl shadow-lg hover:scale-105 transition">
+
+<img src="https://cdn-icons-png.flaticon.com/512/833/833593.png"
+class="w-12 mx-auto mb-4">
+
+<h3 class="font-semibold">
+Booking Online
+</h3>
+
+</div>
+
+<div data-aos="fade-up"
+class="bg-white p-8 rounded-xl shadow-lg hover:scale-105 transition">
+
+<img src="https://cdn-icons-png.flaticon.com/512/747/747310.png"
+class="w-12 mx-auto mb-4">
+
+<h3 class="font-semibold">
+Kalender Jadwal
+</h3>
+
+</div>
+
+<div data-aos="fade-up"
+class="bg-white p-8 rounded-xl shadow-lg hover:scale-105 transition">
+
+<img src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
+class="w-12 mx-auto mb-4">
+
+<h3 class="font-semibold">
+Cek Slot
+</h3>
+
+</div>
+
+<div data-aos="fade-up"
+class="bg-white p-8 rounded-xl shadow-lg hover:scale-105 transition">
+
+<img src="https://cdn-icons-png.flaticon.com/512/2920/2920244.png"
+class="w-12 mx-auto mb-4">
+
+<h3 class="font-semibold">
+Laporan
+</h3>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- PREVIEW KALENDER -->
+
+<section class="py-20">
+
+<div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+
+<div data-aos="fade-right">
+
+<h2 class="text-3xl md:text-4xl font-bold">
+Preview Kalender Booking
+</h2>
+
+<p class="mt-4 text-gray-600">
+
+Pengguna dapat melihat jadwal lapangan yang sudah dibooking melalui kalender otomatis sehingga menghindari bentrok jadwal.
+
+</p>
+
+</div>
+
+<div data-aos="fade-left"
+class="bg-white p-6 rounded-xl shadow-xl">
+
+<img src="https://cdn-icons-png.flaticon.com/512/747/747310.png"
+class="w-40 mx-auto">
+
+<p class="text-center text-gray-500 mt-4">
+Preview Kalender Sistem
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- STATISTIK -->
+
+<section class="py-20 bg-gray-900 text-white">
+
+<div class="max-w-6xl mx-auto grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+<div data-aos="fade-up">
+<h2 class="text-4xl font-bold text-yellow-400">20+</h2>
+<p>Lapangan</p>
+</div>
+
+<div data-aos="fade-up">
+<h2 class="text-4xl font-bold text-yellow-400">500+</h2>
+<p>Booking</p>
+</div>
+
+<div data-aos="fade-up">
+<h2 class="text-4xl font-bold text-yellow-400">150+</h2>
+<p>Member</p>
+</div>
+
+<div data-aos="fade-up">
+<h2 class="text-4xl font-bold text-yellow-400">10+</h2>
+<p>Kota</p>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- CTA -->
+
+<section class="py-24 bg-gradient-to-r from-blue-600 to-red-500 text-white text-center">
+
+<div class="max-w-3xl mx-auto px-6">
+
+<h2 class="text-3xl md:text-4xl font-bold">
+Mulai Booking Lapangan Sekarang
+</h2>
+
+<p class="mt-4">
+Reservasi futsal lebih mudah tanpa bentrok jadwal.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- FOOTER -->
+
+<footer class="bg-gray-900 text-gray-400 py-10">
+
+<div class="max-w-6xl mx-auto px-6 grid sm:grid-cols-2 md:grid-cols-3 gap-8">
+
+<div>
+
+<h3 class="text-white text-xl font-semibold">
+GoalKick
+</h3>
+
+<p class="mt-3">
+Sistem booking lapangan futsal modern untuk menghindari bentrok jadwal.
+</p>
+
+</div>
+
+
+<div>
+
+<h3 class="text-white font-semibold mb-3">
+Menu
+</h3>
+
+<ul class="space-y-2">
+
+<li><a href="index.html" class="hover:text-white">Home</a></li>
+
+<li><a href="gallery.html" class="hover:text-white">Gallery</a></li>
+
+<li><a href="booking.html" class="hover:text-white">Booking</a></li>
+
+<li><a href="tentang.html" class="hover:text-white">Tentang</a></li>
+
+</ul>
+
+</div>
+
+
+<div>
+
+<h3 class="text-white font-semibold mb-3">
+Kontak
+</h3>
+
+<p>Email : info@goalkick.com</p>
+<p>Instagram : @goalkick</p>
+
+</div>
+
+</div>
+
+<p class="text-center text-gray-500 mt-10">
+© 2026 GoalKick
+</p>
+
+</footer>
+
+
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+
+<script>
+AOS.init({
+duration:1000
+});
+</script>
+
+<script>
+
+const btn = document.getElementById("menuBtn");
+const menu = document.getElementById("mobileMenu");
+
+btn.addEventListener("click", () => {
+menu.classList.toggle("hidden");
+});
+
+</script>
+
+</body>
+</html>

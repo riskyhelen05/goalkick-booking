@@ -1,27 +1,85 @@
-  <?php
-session_start();
-// require_once 'koneksi.php'; // uncomment dan sesuaikan path koneksi DB
+<?php
+// ================== KONEKSI DATABASE ==================
+include '../koneksi.php';
 
-// ── DATA (ganti dengan query DB) ──────────────────────────────────────────
-$bookings = [
-  ['id'=>'BK-001','name'=>'Rian Pratama',     'phone'=>'08123456789','field'=>'Arena A',     'type'=>'Indoor', 'date'=>'10 Apr','time'=>'17:00','dur'=>'2 jam','total'=>'Rp 280rb','status'=>'confirmed'],
-  ['id'=>'BK-002','name'=>'FC Muda Surabaya', 'phone'=>'08198765432','field'=>'Arena B',     'type'=>'Indoor', 'date'=>'10 Apr','time'=>'18:00','dur'=>'2 jam','total'=>'Rp 280rb','status'=>'pending'],
-  ['id'=>'BK-003','name'=>'Dian Kusuma',      'phone'=>'08277889900','field'=>'East Wing 1', 'type'=>'Outdoor','date'=>'10 Apr','time'=>'20:00','dur'=>'1 jam','total'=>'Rp 150rb','status'=>'pending'],
-  ['id'=>'BK-004','name'=>'Tim Garuda FC',    'phone'=>'08155667788','field'=>'Arena A',     'type'=>'Indoor', 'date'=>'10 Apr','time'=>'21:00','dur'=>'2 jam','total'=>'Rp 320rb','status'=>'confirmed'],
-  ['id'=>'BK-005','name'=>'Budi Santoso',     'phone'=>'08211223344','field'=>'Arena B',     'type'=>'Indoor', 'date'=>'11 Apr','time'=>'09:00','dur'=>'1 jam','total'=>'Rp 140rb','status'=>'done'],
-  ['id'=>'BK-006','name'=>'Komunitas SBY',    'phone'=>'08299887766','field'=>'East Wing 1', 'type'=>'Outdoor','date'=>'09 Apr','time'=>'08:00','dur'=>'2 jam','total'=>'Rp 200rb','status'=>'cancelled'],
-];
+// ================== AMBIL DATA BOOKING ==================
+$query = "
+SELECT 
+  b.id,
+  b.kode_booking,
+  u.nama AS name,
+  u.no_whatsapp AS phone,
+  l.nama AS field,
+  l.jenis AS type,
+  b.tanggal,
+  b.jam_mulai,
+  b.jam_selesai,
+  b.durasi_jam,
+  b.total_harga,
+  b.status
+FROM booking b
+JOIN users u ON b.user_id = u.id
+JOIN lapangan l ON b.lapangan_id = l.id
+ORDER BY b.id DESC
+";
 
-// ── HELPERS ───────────────────────────────────────────────────────────────
-function statusPill(string $status): string {
-  return match($status) {
-    'confirmed' => '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400">Konfirmasi</span>',
-    'pending'   => '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400">Pending</span>',
-    'done'      => '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400">Selesai</span>',
-    'cancelled' => '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">Dibatalkan</span>',
-    default     => '<span class="text-xs text-gray-500">'.$status.'</span>',
-  };
+$result = $koneksi->query($query);
+
+// ================== FORMAT DATA KE UI ==================
+$bookings = [];
+
+while ($row = $result->fetch_assoc()) {
+
+  // format tanggal & jam
+  $date = date("d M", strtotime($row['tanggal']));
+  $time = date("H:i", strtotime($row['jam_mulai']));
+
+  // format durasi
+  $dur = $row['durasi_jam'] . " jam";
+
+  // format harga
+  $total = "Rp " . number_format($row['total_harga'] / 1000, 0) . "rb";
+
+  // mapping status ke UI
+  $statusMap = [
+    'pending' => 'pending',
+    'confirmed' => 'confirmed',
+    'done' => 'done',
+    'canceled' => 'canceled'
+  ];
+
+  $bookings[] = [
+    'id' => $row['id'], 
+    'kode' => $row['kode_booking'], 
+    'name' => $row['name'],
+    'phone' => $row['phone'],
+    'field' => $row['field'],
+    'type' => $row['type'],
+    'date' => $date,
+    'time' => $time,
+    'dur' => $dur,
+    'total' => $total,
+    'status' => $row['status']
+  ];
 }
+
+// ================== FUNCTION STATUS PILL ==================
+function statusPill($status) {
+  switch ($status) {
+    case 'dikonfirmasi':
+      return '<span class="text-xs px-2.5 py-1 rounded-full bg-green-500/10 text-green-400">Konfirmasi</span>';
+    case 'pending':
+      return '<span class="text-xs px-2.5 py-1 rounded-full bg-yellow-500/10 text-yellow-400">Pending</span>';
+    case 'done':
+      return '<span class="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400">Selesai</span>';
+    case 'canceled':
+      return '<span class="text-xs px-2.5 py-1 rounded-full bg-red-500/10 text-red-400">Dibatalkan</span>';
+    default:
+      return '';
+  }
+}
+
+
 
 // ── TANGGAL ───────────────────────────────────────────────────────────────
 $days_id   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -177,16 +235,22 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
               <td class="px-4 py-3.5 text-sm"><?= $bk['field'] ?> <span class="text-xs text-gray-500 ml-1">· <?= $bk['type'] ?></span></td>
               <td class="px-4 py-3.5 text-sm"><?= $bk['date'] ?> · <?= $bk['time'] ?></td>
               <td class="px-4 py-3.5 text-sm"><?= $bk['dur'] ?></td>
-              <td class="px-4 py-3.5 text-sm font-semibold <?= in_array($bk['status'],['confirmed','done']) ? 'text-green-400' : 'text-gray-400' ?>">
+              <td class="px-4 py-3.5 text-sm font-semibold <?= $bk['status'] ? 'text-green-400' : 'text-gray-400' ?>">
                 <?= $bk['total'] ?>
               </td>
               <td class="px-4 py-3.5"><?= statusPill($bk['status']) ?></td>
               <td class="px-4 py-3.5">
                 <div class="flex gap-1.5">
                   <?php if ($bk['status']==='pending'): ?>
-                    <button class="text-xs px-2.5 py-1 rounded-md border border-green-500/30 text-green-400 hover:bg-green-500/10 transition">Konfirmasi</button>
-                    <button class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">Batal</button>
-                  <?php elseif ($bk['status']==='confirmed'): ?>
+                        <a href="../admin_controller/proses_booking.php?id=<?= $bk['id'] ?>&aksi=konfirmasi"
+                        class="text-xs px-2.5 py-1 rounded-md border border-green-500/30 text-green-400 hover:bg-green-500/10 transition">
+                        Konfirmasi
+                        </a>
+                        <a href="proses_booking.php?id=<?= $bk['id'] ?>&aksi=batal"
+                            class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">
+                            Batal
+                            </a>
+                  <?php elseif ($bk['status']==='dikonfirmasi'): ?>
                     <button class="text-xs px-2.5 py-1 rounded-md border border-white/10 text-gray-300 hover:bg-white/5 transition">Edit</button>
                     <button class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">Batal</button>
                   <?php else: ?>

@@ -1,4 +1,5 @@
 <?php
+include 'koneksi.php';
 session_start();
 
 $error = '';
@@ -12,26 +13,26 @@ if(isset($_COOKIE['remember_user'])){
 }
 
 if(isset($_POST['submit'])){
-    $username = $_POST['username'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $query = "SELECT * FROM user WHERE username='$username' AND password='$password'";
+    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
     $result = mysqli_query($koneksi, $query);
 
     if(mysqli_num_rows($result) > 0){
-        $_SESSION['username'] = $username;
+        $_SESSION['email'] = $email;
 
         // REMEMBER ME
         if(isset($_POST['remember'])){
-            setcookie("remember_user", $username, time() + (86400 * 7)); // 7 hari
+            setcookie("remember_user", $email, time() + (86400 * 7)); // 7 hari
         } else {
             setcookie("remember_user", "", time() - 3600); // hapus
         }
 
-        header("Location: index.php");
+        header("Location: booking.php");
         exit;
     } else {
-        echo "<script>alert('Username atau Password salah!');</script>";
+        echo "<script>alert('email atau Password salah!');</script>";
     }
 }
 ?>
@@ -159,7 +160,7 @@ Ingat saya
 </div>
 
 <!-- Button -->
-<button class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl transition">
+<button class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl transition" name="submit">
 Masuk ke Akun
 </button>
 

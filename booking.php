@@ -3,7 +3,7 @@ session_start();
 include 'koneksi.php';
 
 // 🔒 Proteksi login
-if(!isset($_SESSION['user_id'])){
+if(!isset($_SESSION['email'])){
     header("Location: login.php");
     exit;
 }

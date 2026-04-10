@@ -1,16 +1,7 @@
-<?php 
-$host = "localhost";
-$user = "root";
-$password = "";
-$database = "kampus";
+<?php
+$koneksi = mysqli_connect("127.0.0.1", "root", "", "futsal_booking", 3307);
 
-$koneksi = mysqli_connect($host, $user, $password, $database);
-
-if(!$koneksi){
-    die("koneksi gagal" . mysqli_connect_error());
+if (!$koneksi) {
+    die("Koneksi gagal: " . mysqli_connect_error());
 }
-
-
-
-
 ?>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Futsal Booking System — Prototype</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5}
+.tab-bar{display:flex;gap:0;border-bottom:2px solid #1a1a2e;margin-bottom:0}
+.tab{padding:10px 28px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:#1a1a2e;color:#aaa;transition:all .2s}
+.tab.active{background:#E24B4A;color:#fff}
+.tab:hover:not(.active){background:#2e2e4a;color:#fff}
+.view{display:none}
+.view.active{display:block}
+
+/* CUSTOMER VIEW */
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:28px 24px 20px;color:#fff}
+.hero-badge{display:inline-block;background:#E24B4A;color:#fff;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:8px;letter-spacing:.5px}
+.hero h1{font-size:22px;font-weight:500;margin-bottom:4px}
+.hero p{font-size:13px;color:#a0aec0}
+.search-bar{display:flex;gap:8px;margin-top:14px}
+.search-bar input, .search-bar select{flex:1;padding:8px 12px;border-radius:8px;border:none;font-size:13px;background:#fff;color:#1a1a2e}
+.search-bar button{padding:8px 16px;background:#E24B4A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+
+.section-label{font-size:13px;font-weight:500;color:#666;padding:14px 16px 8px;text-transform:uppercase;letter-spacing:.5px}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.field-card{background:#fff;border:0.5px solid #ddd;border-radius:12px;overflow:hidden;cursor:pointer;transition:border .15s}
+.field-card:hover{border-color:#E24B4A}
+.field-img{height:90px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.field-img.a{background:#E6F1FB}
+.field-img.b{background:#EAF3DE}
+.field-img.c{background:#FAEEDA}
+.field-img.d{background:#FAECE7}
+.field-info{padding:10px}
+.field-name{font-size:13px;font-weight:500;color:#1a1a2e;margin-bottom:2px}
+.field-price{font-size:12px;color:#E24B4A;font-weight:500}
+.field-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:10px;background:#f0f0f0;color:#666}
+
+.slot-section{padding:0 16px 16px}
+.date-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
+.date-chip{min-width:52px;padding:7px 6px;border-radius:10px;border:0.5px solid #ddd;text-align:center;cursor:pointer;background:#fff}
+.date-chip.active{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.date-chip .day{font-size:10px;color:inherit;opacity:.7}
+.date-chip .num{font-size:15px;font-weight:500}
+
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slot{padding:8px 4px;text-align:center;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid #ddd}
+.slot.available{background:#fff;color:#1a1a2e}
+.slot.available:hover{border-color:#E24B4A;color:#E24B4A}
+.slot.booked{background:#FCEBEB;color:#A32D2D;cursor:not-allowed;border-color:#F7C1C1}
+.slot.selected{background:#E24B4A;color:#fff;border-color:#E24B4A}
+
+.booking-form{background:#fff;border:0.5px solid #ddd;border-radius:12px;margin:0 16px 16px;padding:14px}
+.booking-form h3{font-size:14px;font-weight:500;margin-bottom:12px;color:#1a1a2e}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.form-row input, .form-row select{padding:8px 10px;border-radius:8px;border:0.5px solid #ddd;font-size:13px;background:#f9f9f9;color:#1a1a2e;width:100%}
+.pay-opts{display:flex;gap:8px;margin-bottom:12px}
+.pay-opt{flex:1;padding:8px;border-radius:8px;border:0.5px solid #ddd;text-align:center;font-size:12px;cursor:pointer;color:#666;background:#fff}
+.pay-opt.active{border-color:#E24B4A;color:#E24B4A;background:#FCEBEB}
+.book-btn{width:100%;padding:11px;background:#E24B4A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer}
+.book-btn:hover{background:#A32D2D}
+
+/* ADMIN VIEW */
+.admin-header{background:#1a1a2e;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.admin-header .logo{color:#fff;font-size:16px;font-weight:500}
+.admin-header .badge{background:#E24B4A;color:#fff;font-size:11px;padding:3px 10px;border-radius:20px}
+.admin-body{padding:16px}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:#f0f0f0;border-radius:10px;padding:12px}
+.stat-label{font-size:11px;color:#666;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:500;color:#1a1a2e}
+.stat-sub{font-size:11px;margin-top:2px}
+.stat-sub.up{color:#3B6D11}
+.stat-sub.down{color:#A32D2D}
+
+.admin-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.panel{background:#fff;border:0.5px solid #ddd;border-radius:12px;padding:14px}
+.panel-title{font-size:13px;font-weight:500;color:#1a1a2e;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.panel-title span{font-size:11px;color:#666;font-weight:400}
+
+.booking-list{display:flex;flex-direction:column;gap:8px}
+.booking-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:#f9f9f9}
+.booking-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.booking-avatar.a{background:#B5D4F4;color:#0C447C}
+.booking-avatar.b{background:#9FE1CB;color:#085041}
+.booking-avatar.c{background:#FAC775;color:#633806}
+.booking-avatar.d{background:#F4C0D1;color:#72243E}
+.booking-detail{flex:1;min-width:0}
+.booking-name{font-size:13px;font-weight:500;color:#1a1a2e}
+.booking-meta{font-size:11px;color:#666}
+.status-badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+.status-badge.confirmed{background:#EAF3DE;color:#3B6D11}
+.status-badge.pending{background:#FAEEDA;color:#854F0B}
+.status-badge.cancelled{background:#FCEBEB;color:#A32D2D}
+
+.schedule-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:4px}
+.sch-header{font-size:10px;font-weight:500;color:#666;text-align:center;padding:4px 2px}
+.sch-slot{height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500}
+.sch-slot.taken{background:#FCEBEB;color:#A32D2D}
+.sch-slot.free{background:#EAF3DE;color:#3B6D11}
+.sch-slot.ongoing{background:#FAEEDA;color:#854F0B}
+
+.income-bar{margin-bottom:10px}
+.income-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.income-day{font-size:11px;color:#666;width:28px}
+.bar-track{flex:1;background:#f0f0f0;border-radius:4px;height:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:#E24B4A}
+.income-amt{font-size:11px;font-weight:500;color:#1a1a2e;min-width:50px;text-align:right}
+
+.notif-list{display:flex;flex-direction:column;gap:6px}
+.notif-item{padding:8px 10px;border-radius:8px;background:#f9f9f9;font-size:12px;color:#1a1a2e;border-left:3px solid #E24B4A}
+.notif-time{font-size:10px;color:#666;margin-top:2px}
+
+.confirm-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100}
+.confirm-modal.show{display:flex}
+.modal-card{background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center}
+.modal-icon{font-size:36px;margin-bottom:12px}
+.modal-title{font-size:16px;font-weight:500;margin-bottom:6px;color:#1a1a2e}
+.modal-sub{font-size:13px;color:#666;margin-bottom:16px}
+.modal-detail{background:#f9f9f9;border-radius:8px;padding:10px;font-size:12px;color:#1a1a2e;margin-bottom:16px;text-align:left}
+.modal-detail div{margin-bottom:4px}
+.modal-close{width:100%;padding:10px;background:#E24B4A;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchView('customer',this)">Tampilan Customer</button>
+  <button class="tab" onclick="switchView('admin',this)">Dashboard Admin</button>
+</div>
+
+<!-- CUSTOMER VIEW -->
+<div class="view active" id="view-customer">
+  <div class="hero">
+    <div class="hero-badge">Smart Futsal Booking</div>
+    <h1>Booking Lapangan, Mudah & Cepat</h1>
+    <p>Real-time availability · Bayar digital · Konfirmasi otomatis</p>
+    <div class="search-bar">
+      <select><option>Semua Lapangan</option><option>Lapangan A</option><option>Lapangan B</option></select>
+      <input type="date" value="2025-07-12">
+      <button>Cari</button>
+    </div>
+  </div>
+
+  <div class="section-label">Pilih Lapangan</div>
+  <div class="field-grid">
+    <div class="field-card"><div class="field-img a">⚽</div><div class="field-info"><div class="field-name">Lapangan A</div><div class="field-price">Rp 120.000/jam</div><div class="field-tags"><span class="tag">Indoor</span><span class="tag">AC</span></div></div></div>
+    <div class="field-card"><div class="field-img b">⚽</div><div class="field-info"><div class="field-name">Lapangan B</div><div class="field-price">Rp 100.000/jam</div><div class="field-tags"><span class="tag">Indoor</span><span class="tag">Standar</span></div></div></div>
+    <div class="field-card"><div class="field-img c">⚽</div><div class="field-info"><div class="field-name">Lapangan C</div><div class="field-price">Rp 90.000/jam</div><div class="field-tags"><span class="tag">Outdoor</span></div></div></div>
+    <div class="field-card"><div class="field-img d">⚽</div><div class="field-info"><div class="field-name">Lapangan D</div><div class="field-price">Rp 110.000/jam</div><div class="field-tags"><span class="tag">Indoor</span><span class="tag">VIP</span></div></div></div>
+  </div>
+
+  <div class="section-label">Pilih Tanggal & Jam</div>
+  <div class="slot-section">
+    <div class="date-row">
+      <div class="date-chip active"><div class="day">Sab</div><div class="num">12</div></div>
+      <div class="date-chip"><div class="day">Min</div><div class="num">13</div></div>
+      <div class="date-chip"><div class="day">Sen</div><div class="num">14</div></div>
+      <div class="date-chip"><div class="day">Sel</div><div class="num">15</div></div>
+      <div class="date-chip"><div class="day">Rab</div><div class="num">16</div></div>
+      <div class="date-chip"><div class="day">Kam</div><div class="num">17</div></div>
+      <div class="date-chip"><div class="day">Jum</div><div class="num">18</div></div>
+    </div>
+    <div class="slot-grid">
+      <div class="slot booked">07.00</div>
+      <div class="slot booked">08.00</div>
+      <div class="slot available" onclick="selectSlot(this)">09.00</div>
+      <div class="slot available" onclick="selectSlot(this)">10.00</div>
+      <div class="slot booked">11.00</div>
+      <div class="slot available" onclick="selectSlot(this)">12.00</div>
+      <div class="slot available" onclick="selectSlot(this)">13.00</div>
+      <div class="slot booked">14.00</div>
+      <div class="slot available" onclick="selectSlot(this)">15.00</div>
+      <div class="slot available" onclick="selectSlot(this)">16.00</div>
+      <div class="slot available" onclick="selectSlot(this)">17.00</div>
+      <div class="slot booked">18.00</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#666">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:0.5px solid #ddd;display:inline-block"></span>Tersedia</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#FCEBEB;display:inline-block"></span>Terisi</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#E24B4A;display:inline-block"></span>Dipilih</span>
+    </div>
+  </div>
+
+  <div class="booking-form">
+    <h3>Detail Pemesanan</h3>
+    <div class="form-row">
+      <input type="text" placeholder="Nama lengkap" value="Rizky Herlambang">
+      <input type="tel" placeholder="No. WhatsApp" value="08123456789">
+    </div>
+    <div class="form-row">
+      <select><option>Lapangan A</option><option>Lapangan B</option><option>Lapangan C</option><option>Lapangan D</option></select>
+      <select><option>1 jam</option><option>2 jam</option><option>3 jam</option></select>
+    </div>
+    <div style="font-size:12px;color:#666;margin-bottom:8px">Metode Pembayaran</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="selectPay(this)">GoPay</div>
+      <div class="pay-opt" onclick="selectPay(this)">OVO</div>
+      <div class="pay-opt" onclick="selectPay(this)">Dana</div>
+      <div class="pay-opt" onclick="selectPay(this)">Transfer</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;color:#1a1a2e">
+      <span>Total Pembayaran</span>
+      <span style="font-weight:500;color:#E24B4A">Rp 120.000</span>
+    </div>
+    <div style="font-size:11px;color:#666;margin-bottom:12px">Lapangan A · Sabtu, 12 Jul · 16.00 - 17.00</div>
+    <button class="book-btn" onclick="showConfirm()">Pesan Sekarang</button>
+  </div>
+</div>
+
+<!-- ADMIN VIEW -->
+<div class="view" id="view-admin">
+  <div class="admin-header">
+    <div class="logo">Smart Futsal Admin</div>
+    <div class="badge">Live</div>
+  </div>
+  <div class="admin-body">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Booking Hari Ini</div><div class="stat-val">18</div><div class="stat-sub up">+3 dari kemarin</div></div>
+      <div class="stat-card"><div class="stat-label">Pendapatan Hari Ini</div><div class="stat-val">2,16jt</div><div class="stat-sub up">+12% minggu ini</div></div>
+      <div class="stat-card"><div class="stat-label">Slot Tersedia</div><div class="stat-val">6</div><div class="stat-sub down">Lapangan A penuh</div></div>
+      <div class="stat-card"><div class="stat-label">Booking Pending</div><div class="stat-val">3</div><div class="stat-sub" style="color:#854F0B">Perlu konfirmasi</div></div>
+    </div>
+
+    <div class="admin-grid">
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">Booking Masuk <span>Hari ini, Sabtu 12 Jul</span></div>
+          <div class="booking-list">
+            <div class="booking-item"><div class="booking-avatar a">RH</div><div class="booking-detail"><div class="booking-name">Rizky Herlambang</div><div class="booking-meta">Lapangan A · 16.00-17.00 · GoPay</div></div><span class="status-badge confirmed">Confirmed</span></div>
+            <div class="booking-item"><div class="booking-avatar b">DS</div><div class="booking-detail"><div class="booking-name">Dika Santoso</div><div class="booking-meta">Lapangan B · 15.00-17.00 · OVO</div></div><span class="status-badge confirmed">Confirmed</span></div>
+            <div class="booking-item"><div class="booking-avatar c">AP</div><div class="booking-detail"><div class="booking-name">Andi Pratama</div><div class="booking-meta">Lapangan C · 17.00-18.00 · Transfer</div></div><span class="status-badge pending">Pending</span></div>
+            <div class="booking-item"><div class="booking-avatar d">FR</div><div class="booking-detail"><div class="booking-name">Fajar Ramadhan</div><div class="booking-meta">Lapangan A · 18.00-19.00 · GoPay</div></div><span class="status-badge pending">Pending</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Pendapatan Minggu Ini</div>
+          <div class="income-bar">
+            <div class="income-row"><span class="income-day">Sen</span><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><span class="income-amt">Rp 720rb</span></div>
+            <div class="income-row"><span class="income-day">Sel</span><div class="bar-track"><div class="bar-fill" style="width:45%"></div></div><span class="income-amt">Rp 540rb</span></div>
+            <div class="income-row"><span class="income-day">Rab</span><div class="bar-track"><div class="bar-fill" style="width:75%"></div></div><span class="income-amt">Rp 900rb</span></div>
+            <div class="income-row"><span class="income-day">Kam</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="income-amt">Rp 660rb</span></div>
+            <div class="income-row"><span class="income-day">Jum</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="income-amt">Rp 1,06jt</span></div>
+            <div class="income-row"><span class="income-day">Sab</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="income-amt">Rp 2,16jt</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">Jadwal Lapangan <span>Real-time</span></div>
+          <div class="schedule-grid">
+            <div class="sch-header">Jam</div><div class="sch-header">Lap A</div><div class="sch-header">Lap B</div><div class="sch-header">Lap C</div><div class="sch-header">Lap D</div>
+            <div class="sch-header" style="font-size:9px;color:#666">14.00</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div>
+            <div class="sch-header" style="font-size:9px;color:#666">15.00</div><div class="sch-slot taken">Terisi</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div><div class="sch-slot taken">Terisi</div>
+            <div class="sch-header" style="font-size:9px;color:#666">16.00</div><div class="sch-slot ongoing">Sekarang</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div><div class="sch-slot free">Bebas</div>
+            <div class="sch-header" style="font-size:9px;color:#666">17.00</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div><div class="sch-slot taken">Terisi</div><div class="sch-slot taken">Terisi</div>
+            <div class="sch-header" style="font-size:9px;color:#666">18.00</div><div class="sch-slot free">Bebas</div><div class="sch-slot free">Bebas</div><div class="sch-slot taken">Terisi</div><div class="sch-slot free">Bebas</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Notifikasi Sistem</div>
+          <div class="notif-list">
+            <div class="notif-item">Booking baru dari Rizky Herlambang — Lap A 16.00<div class="notif-time">14:32 · Menunggu konfirmasi</div></div>
+            <div class="notif-item">Pembayaran GoPay berhasil diterima — Rp 120.000<div class="notif-time">14:28 · Otomatis tercatat</div></div>
+            <div class="notif-item">Fajar Ramadhan konfirmasi booking Lap A 18.00<div class="notif-time">13:55 · Pending verifikasi</div></div>
+            <div class="notif-item" style="border-left-color:#3B6D11">Rekap harian otomatis — 18 booking, Rp 2,16jt<div class="notif-time">Diperbarui otomatis</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-icon">✅</div>
+    <div class="modal-title">Booking Berhasil!</div>
+    <div class="modal-sub">Konfirmasi telah dikirim ke WhatsApp kamu</div>
+    <div class="modal-detail">
+      <div><strong>Lapangan A</strong> · Indoor AC</div>
+      <div>Sabtu, 12 Juli 2025 · 16.00 - 17.00</div>
+      <div>Pembayaran: GoPay · Rp 120.000</div>
+      <div style="margin-top:6px;color:#3B6D11">ID Booking: #FTB-20250712-001</div>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Tutup & Lihat Riwayat</button>
+  </div>
+</div>
+
+<script>
+function switchView(v, btn){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  btn.classList.add('active');
+}
+function selectSlot(el){
+  document.querySelectorAll('.slot.selected').forEach(s=>{s.classList.remove('selected');s.classList.add('available')});
+  if(!el.classList.contains('booked')){el.classList.remove('available');el.classList.add('selected')}
+}
+function selectPay(el){
+  document.querySelectorAll('.pay-opt').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+function showConfirm(){
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+}
+</script>
+</body>
+</html>

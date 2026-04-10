@@ -1,15 +1,14 @@
 <?php
 include 'koneksi.php';
 session_start();
+include 'koneksi.php';
 
-$error = '';
-$success = '';
+$error = "";
 
-
-// Ambil cookie jika ada
-$remember_username = "";
+// Ambil cookie
+$remember_email = "";
 if(isset($_COOKIE['remember_user'])){
-    $remember_username = $_COOKIE['remember_user'];
+    $remember_email = $_COOKIE['remember_user'];
 }
 
 if(isset($_POST['submit'])){
@@ -26,7 +25,7 @@ if(isset($_POST['submit'])){
         if(isset($_POST['remember'])){
             setcookie("remember_user", $email, time() + (86400 * 7)); // 7 hari
         } else {
-            setcookie("remember_user", "", time() - 3600); // hapus
+            $error = "Password salah!";
         }
 
         header("Location: booking.php");

@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+// 🔒 Proteksi halaman (harus login dulu)
+if(!isset($_SESSION['user_id'])){
+    header("Location: login.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>

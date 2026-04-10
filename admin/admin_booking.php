@@ -246,13 +246,16 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
                         class="text-xs px-2.5 py-1 rounded-md border border-green-500/30 text-green-400 hover:bg-green-500/10 transition">
                         Konfirmasi
                         </a>
-                        <a href="proses_booking.php?id=<?= $bk['id'] ?>&aksi=batal"
+                        <a href="../admin_controller/proses_booking.php?id=<?= $bk['id'] ?>&aksi=batal"
                             class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">
                             Batal
                             </a>
                   <?php elseif ($bk['status']==='dikonfirmasi'): ?>
                     <button class="text-xs px-2.5 py-1 rounded-md border border-white/10 text-gray-300 hover:bg-white/5 transition">Edit</button>
-                    <button class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">Batal</button>
+                     <a href="../admin_controller/proses_booking.php?id=<?= $bk['id'] ?>&aksi=batal"
+                            class="text-xs px-2.5 py-1 rounded-md border border-red-500/20 text-red-400 hover:bg-red-500/10 transition">
+                            Batal
+                            </a>
                   <?php else: ?>
                     <button class="text-xs px-2.5 py-1 rounded-md border border-white/10 text-gray-400 hover:bg-white/5 transition">Detail</button>
                   <?php endif; ?>

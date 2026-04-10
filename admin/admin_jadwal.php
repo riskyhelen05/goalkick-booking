@@ -1,33 +1,80 @@
 <?php
 session_start();
-// require_once 'koneksi.php'; // uncomment dan sesuaikan path koneksi DB
+include '../koneksi.php';
 
-// ── DATA (ganti dengan query DB) ──────────────────────────────────────────
+// ── FIELD & TIME  ───────────────────
 $schedule_fields = ['Arena A','Arena B','East Wing 1','West Terrace'];
 $time_slots      = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00'];
 
-$schedule_slots = [
-  ['field'=>'Arena A',     'label'=>'Latihan Pagi',  'start'=>'08:00','end'=>'10:00','col'=>'slot-green','row'=>1],
-  ['field'=>'East Wing 1', 'label'=>'Komunitas SBY', 'start'=>'08:00','end'=>'09:00','col'=>'slot-blue', 'row'=>1],
-  ['field'=>'Arena B',     'label'=>'U-18 Camp',     'start'=>'10:00','end'=>'12:00','col'=>'slot-red',  'row'=>2],
-  ['field'=>'West Terrace','label'=>'Maintenance',   'start'=>'10:00','end'=>'12:00','col'=>'slot-yellow','row'=>2],
-  ['field'=>'Arena A',     'label'=>'Rian Pratama',  'start'=>'12:00','end'=>'13:00','col'=>'slot-blue', 'row'=>3],
-  ['field'=>'Arena B',     'label'=>'Tim Garuda FC', 'start'=>'14:00','end'=>'16:00','col'=>'slot-green','row'=>4],
-  ['field'=>'Arena A',     'label'=>'Pro-League',    'start'=>'16:00','end'=>'18:00','col'=>'slot-red',  'row'=>5],
-  ['field'=>'East Wing 1', 'label'=>'Dian Kusuma',   'start'=>'16:00','end'=>'17:00','col'=>'slot-blue', 'row'=>5],
-  ['field'=>'Arena B',     'label'=>'FC Muda SBY',   'start'=>'18:00','end'=>'20:00','col'=>'slot-red',  'row'=>6],
-  ['field'=>'East Wing 1', 'label'=>'Komunitas B',   'start'=>'18:00','end'=>'20:00','col'=>'slot-green','row'=>6],
-  ['field'=>'Arena A',     'label'=>'Premium Night', 'start'=>'20:00','end'=>'22:00','col'=>'slot-green','row'=>7],
-  ['field'=>'West Terrace','label'=>'Sewa Pribadi',  'start'=>'20:00','end'=>'21:00','col'=>'slot-blue', 'row'=>7],
+// ── FILTER TANGGAL (DEFAULT HARI INI) ────────────────
+$tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+
+// ── AMBIL BOOKING YANG SUDAH DIKONFIRMASI ───────────
+$query = "
+SELECT b.*, l.nama as nama_lapangan, u.nama as nama_user
+FROM booking b
+JOIN lapangan l ON b.lapangan_id = l.id
+JOIN users u ON b.user_id = u.id
+WHERE (b.status = 'dikonfirmasi' OR b.status = 'pending')
+AND DATE(b.tanggal) = '$tanggal'
+";
+
+$result = $koneksi->query($query);
+
+// ── MAP JAM KE GRID ─────────────────────────────────
+$rowIndexMap = [
+  '08:00' => 1,
+  '09:00' => 1,
+  '10:00' => 2,
+  '11:00' => 2,
+  '12:00' => 3,
+  '13:00' => 3,
+  '14:00' => 4,
+  '15:00' => 4,
+  '16:00' => 5,
+  '17:00' => 5,
+  '18:00' => 6,
+  '19:00' => 6,
+  '20:00' => 7,
 ];
 
-// Build slot lookup [field][row]
+// ── BUILD SLOT DARI BOOKING ─────────────────────────
+$schedule_slots = [];
+
+while ($row = $result->fetch_assoc()) {
+
+  $start = date("H:i", strtotime($row['jam_mulai']));
+  $end   = date("H:i", strtotime($row['jam_selesai']));
+
+  $rowIndex = $rowIndexMap[$start] ?? null;
+  if (!$rowIndex) continue;
+
+  // mapping nama lapangan ke UI
+  $mapLapangan = [
+    'Lapangan A' => 'Arena A',
+    'Lapangan B' => 'Arena B',
+  ];
+
+  $namaLap = $row['nama_lapangan'];
+  $fieldUI = $mapLapangan[$namaLap] ?? $namaLap;
+
+  $schedule_slots[] = [
+    'field' => $fieldUI,
+    'label' => $row['nama_user'],
+    'start' => $start,
+    'end'   => $end,
+    'col' => $row['status'] == 'pending' ? 'slot-yellow' : 'slot-green',
+    'row'   => $rowIndex
+  ];
+}
+
+// ── BUILD MAP ───────────────────────────────────────
 $slot_map = [];
 foreach ($schedule_slots as $s) {
   $slot_map[$s['field']][$s['row']] = $s;
 }
 
-// ── TANGGAL ───────────────────────────────────────────────────────────────
+// ── TANGGAL FORMAT ──────────────────────────────────
 $days_id   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 $months_id = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date('n')] . ' ' . date('Y');
@@ -66,6 +113,11 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
     .modal-backdrop { backdrop-filter:blur(4px); }
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     .modal-box { animation:fadeUp .25s ease; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 1;
+  cursor: pointer;
+}
   </style>
 </head>
 <body class="font-sans flex min-h-screen">
@@ -144,18 +196,23 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
   <!-- PAGE CONTENT -->
   <main class="p-7 flex-1">
 
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-1">
       <div class="text-sm text-gray-500">Kelola jadwal penggunaan lapangan secara visual</div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
-          <button class="w-8 h-8 rounded-lg border border-white/10 text-white text-sm flex items-center justify-center hover:bg-white/5 transition" style="background:#1c1c1c">‹</button>
-          <span class="text-sm font-semibold px-2">7 – 13 April 2026</span>
-          <button class="w-8 h-8 rounded-lg border border-white/10 text-white text-sm flex items-center justify-center hover:bg-white/5 transition" style="background:#1c1c1c">›</button>
-        </div>
-        <button onclick="openModal()" class="bg-brand-red text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-red2 transition">
-          + Tambah Booking
+     
+        
+        
+          <form method="GET" class="flex items-center gap-2">
+                <input type="date" name="tanggal" value="<?= $tanggal ?>"
+                    class="bg-[#1a1a1a] border border-white/10 text-white text-xs px-3 py-2 rounded-lg outline-none">
+
+            <button type="submit"
+            class="text-xs px-3 py-2 rounded-lg bg-brand-red text-white hover:bg-brand-red2">
+            Filter
         </button>
-      </div>
+        </form>
+
+        
+      
     </div>
 
     <div class="rounded-xl border border-white/5 overflow-hidden" style="background:#1c1c1c">
@@ -218,80 +275,5 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
 
   </main>
 </div>
-
-<!-- FAB -->
-<button onclick="openModal()"
-  class="fixed bottom-7 right-7 rounded-full bg-brand-red text-white text-2xl flex items-center justify-center shadow-lg z-40 hover:scale-110 transition-transform"
-  style="width:52px;height:52px;box-shadow:0 4px 20px rgba(232,25,44,0.4)">＋</button>
-
-<!-- MODAL BOOKING -->
-<div id="modal" class="modal-backdrop fixed inset-0 bg-black/70 z-50 hidden items-center justify-center"
-     onclick="if(event.target===this)closeModal()">
-  <div class="modal-box rounded-2xl p-7 w-[480px] max-w-[95vw] border border-white/5" style="background:#1c1c1c">
-    <div class="font-display text-2xl tracking-widest mb-1">Tambah Booking</div>
-    <div class="text-xs text-gray-500 mb-6">Buat reservasi lapangan baru</div>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Nama Pelanggan</label>
-        <input type="text" placeholder="Nama lengkap" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">No. WhatsApp</label>
-        <input type="text" placeholder="08xxxxxxxxxx" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
-      </div>
-      <div class="flex flex-col gap-1.5 col-span-2">
-        <label class="text-xs text-gray-500 tracking-wide">Pilih Lapangan</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <option>Arena A (Indoor · Rp 140rb/jam)</option>
-          <option>Arena B (Indoor · Rp 160rb/jam)</option>
-          <option>East Wing 1 (Outdoor · Rp 100rb/jam)</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Tanggal</label>
-        <input type="date" value="<?= date('Y-m-d') ?>" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a; color-scheme:dark" />
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Jam Mulai</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <?php foreach(['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'] as $h): ?>
-          <option <?= $h==='18:00'?'selected':'' ?>><?= $h ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Durasi</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <option>1 Jam</option><option selected>2 Jam</option><option>3 Jam</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Catatan</label>
-        <input type="text" placeholder="Opsional" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
-      </div>
-    </div>
-    <div class="flex justify-between items-center rounded-lg px-4 py-3 text-sm mt-1" style="background:#1a1a1a">
-      <span class="text-gray-500">Estimasi Total</span>
-      <span class="font-bold text-green-400">Rp 280.000</span>
-    </div>
-    <div class="flex gap-2.5 mt-5">
-      <button onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-gray-400 text-sm hover:bg-white/5 transition">Batal</button>
-      <button onclick="closeModal()" class="flex-[2] py-2.5 rounded-lg bg-brand-red text-white text-sm font-semibold hover:bg-brand-red2 transition">✓ Buat Booking</button>
-    </div>
-  </div>
-</div>
-
-<script>
-function openModal() { const m=document.getElementById('modal'); m.classList.remove('hidden'); m.classList.add('flex'); }
-function closeModal() { const m=document.getElementById('modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
-function filterTab(btn, group) {
-  document.querySelectorAll(`.ftab-${group}`).forEach(b => {
-    b.classList.remove('bg-brand-red','text-white','border-brand-red');
-    b.classList.add('text-gray-500','border-white/10');
-  });
-  btn.classList.add('bg-brand-red','text-white','border-brand-red');
-  btn.classList.remove('text-gray-500','border-white/10');
-}
-</script>
 </body>
 </html>

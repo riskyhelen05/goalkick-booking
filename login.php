@@ -1,4 +1,5 @@
 <?php
+include 'koneksi.php';
 session_start();
 include 'koneksi.php';
 
@@ -14,44 +15,23 @@ if(isset($_POST['submit'])){
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Ambil user berdasarkan email
-    $stmt = mysqli_prepare($koneksi, "SELECT * FROM users WHERE email=?");
-    mysqli_stmt_bind_param($stmt, "s", $email);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
+    $result = mysqli_query($koneksi, $query);
 
     if(mysqli_num_rows($result) > 0){
-        $user = mysqli_fetch_assoc($result);
+        $_SESSION['email'] = $email;
 
-        // Verifikasi password
-        if(password_verify($password, $user['password'])){
-
-            // Simpan session
-            $_SESSION['id'] = $user['id'];
-            $_SESSION['nama'] = $user['nama'];
-            $_SESSION['role'] = $user['role'];
-
-            // Cookie
-            if(isset($_POST['remember'])){
-                setcookie("remember_user", $email, time() + (86400 * 7));
-            } else {
-                setcookie("remember_user", "", time() - 3600);
-            }
-
-            // Redirect berdasarkan role
-            if($user['role'] == 'admin'){
-                header("Location: admin/dashboard.php");
-            } else {
-                header("Location: user/dashboard.php");
-            }
-            exit;
-
+        // REMEMBER ME
+        if(isset($_POST['remember'])){
+            setcookie("remember_user", $email, time() + (86400 * 7)); // 7 hari
         } else {
             $error = "Password salah!";
         }
 
+        header("Location: booking.php");
+        exit;
     } else {
-        $error = "Email tidak ditemukan!";
+        echo "<script>alert('email atau Password salah!');</script>";
     }
 }
 ?>
@@ -179,7 +159,7 @@ Ingat saya
 </div>
 
 <!-- Button -->
-<button class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl transition">
+<button class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl transition" name="submit">
 Masuk ke Akun
 </button>
 

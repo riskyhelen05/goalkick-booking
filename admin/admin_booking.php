@@ -140,6 +140,7 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
       ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null,'active'=>false],
       ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>3,   'active'=>false],
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,'active'=>false],
+       ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>null, 'active'=>false],
       ['href'=>'admin_laporan.php',  'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
     ];
     foreach ($nav as $n): ?>

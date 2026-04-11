@@ -1,26 +1,93 @@
 <?php
 session_start();
-// require_once 'koneksi.php'; // uncomment dan sesuaikan path koneksi DB
+include '../koneksi.php';
 
-// ── DATA (ganti dengan query DB) ──────────────────────────────────────────
-$fields = [
-  ['name'=>'Arena A',     'type'=>'Indoor · Standard · AC',      'status'=>'active',      'price'=>'Rp 140rb','occ'=>92,'rating'=>'5.0','icon'=>'🏟️','color'=>'from-neutral-900 to-red-950'],
-  ['name'=>'Arena B',     'type'=>'Indoor · Premium · Full AC',  'status'=>'active',      'price'=>'Rp 160rb','occ'=>87,'rating'=>'4.8','icon'=>'🏆','color'=>'from-neutral-900 to-red-950'],
-  ['name'=>'East Wing 1', 'type'=>'Outdoor · Rumput Sintetis',   'status'=>'active',      'price'=>'Rp 100rb','occ'=>71,'rating'=>'4.5','icon'=>'⚽','color'=>'from-neutral-900 to-green-950'],
-  ['name'=>'West Terrace','type'=>'Outdoor · Aspal · Lighting',  'status'=>'maintenance', 'price'=>'Rp 80rb', 'occ'=>0, 'rating'=>'4.2','icon'=>'🔧','color'=>'from-neutral-900 to-yellow-950'],
-];
+// ── HANDLE POST: TAMBAH / EDIT / TOGGLE STATUS ────────────────────────────
+$msg = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'tambah' || $action === 'edit') {
+        $id         = intval($_POST['id'] ?? 0);
+        $nama       = $koneksi->real_escape_string(trim($_POST['nama'] ?? ''));
+        $jenis      = $koneksi->real_escape_string($_POST['jenis'] ?? 'sintetis');
+        $harga      = intval($_POST['harga_per_jam'] ?? 0);
+        $fasilitas  = $koneksi->real_escape_string(trim($_POST['fasilitas'] ?? ''));
+        $status     = $koneksi->real_escape_string($_POST['status'] ?? 'tersedia');
+
+        if ($action === 'tambah') {
+            $koneksi->query("INSERT INTO lapangan (nama, jenis, harga_per_jam, fasilitas, status) VALUES ('$nama','$jenis',$harga,'$fasilitas','$status')");
+            $msg = 'Lapangan berhasil ditambahkan.';
+        } else {
+            $koneksi->query("UPDATE lapangan SET nama='$nama', jenis='$jenis', harga_per_jam=$harga, fasilitas='$fasilitas', status='$status' WHERE id=$id");
+            $msg = 'Lapangan berhasil diupdate.';
+        }
+    } elseif ($action === 'toggle_status') {
+        $id         = intval($_POST['id'] ?? 0);
+        $new_status = $koneksi->real_escape_string($_POST['new_status'] ?? 'tersedia');
+        $koneksi->query("UPDATE lapangan SET status='$new_status' WHERE id=$id");
+        $msg = 'Status lapangan berhasil diubah.';
+    } elseif ($action === 'hapus') {
+        $id = intval($_POST['id'] ?? 0);
+        $koneksi->query("DELETE FROM lapangan WHERE id=$id");
+        $msg = 'Lapangan berhasil dihapus.';
+    }
+
+    header('Location: admin_lapangan.php?msg=' . urlencode($msg));
+    exit;
+}
+
+if (isset($_GET['msg'])) $msg = $_GET['msg'];
+
+// ── AMBIL DATA LAPANGAN + STATISTIK ──────────────────────────────────────
+$bulan_ini_awal  = date('Y-m-01');
+$bulan_ini_akhir = date('Y-m-t');
+
+$result = $koneksi->query("
+    SELECT l.*,
+        (SELECT COUNT(*) FROM booking b WHERE b.lapangan_id = l.id
+         AND b.tanggal BETWEEN '$bulan_ini_awal' AND '$bulan_ini_akhir'
+         AND b.status IN ('selesai','dikonfirmasi')) as booking_bulan_ini,
+        (SELECT COALESCE(SUM(b.total_harga),0) FROM booking b WHERE b.lapangan_id = l.id
+         AND b.tanggal BETWEEN '$bulan_ini_awal' AND '$bulan_ini_akhir'
+         AND b.status IN ('selesai','dikonfirmasi')) as pendapatan_bulan_ini,
+        (SELECT COUNT(*) FROM booking b WHERE b.lapangan_id = l.id
+         AND b.tanggal = CURDATE()
+         AND b.status IN ('dikonfirmasi','pending')) as booking_hari_ini
+    FROM lapangan l
+    ORDER BY l.id ASC
+");
+$fields = [];
+while ($row = $result->fetch_assoc()) $fields[] = $row;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-function occColor(int $occ): string {
-  if ($occ === 0)  return 'text-red-400';
-  if ($occ < 60)   return 'text-yellow-400';
-  return 'text-green-400';
+function rupiah($n) { return 'Rp ' . number_format($n, 0, ',', '.'); }
+function rupiahShort($n) {
+    if ($n >= 1000000) return 'Rp ' . number_format($n/1000000,1,',','.') . 'jt';
+    if ($n >= 1000)    return 'Rp ' . number_format($n/1000,0,',','.') . 'rb';
+    return 'Rp ' . $n;
 }
+function occColor($occ) {
+    if ($occ == 0) return 'text-red-400';
+    if ($occ < 60) return 'text-yellow-400';
+    return 'text-green-400';
+}
+
+// Hitung occupancy: jumlah jam terpakai / total jam operasional (14 jam: 08.00-22.00) per bulan
+$days_in_month = intval(date('t'));
+$total_jam_ops = 14 * $days_in_month; // 14 jam/hari
+
+$court_icons  = ['sintetis'=>'⚽','vinyl'=>'🏟️','rumput'=>'🌿'];
+$court_colors = ['sintetis'=>'from-neutral-900 to-green-950','vinyl'=>'from-neutral-900 to-red-950','rumput'=>'from-neutral-900 to-emerald-950'];
 
 // ── TANGGAL ───────────────────────────────────────────────────────────────
 $days_id   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 $months_id = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date('n')] . ' ' . date('Y');
+
+// Pending pembayaran untuk badge sidebar
+$r = $koneksi->query("SELECT COUNT(*) as c FROM pembayaran WHERE status='pending'");
+$pending = $r->fetch_assoc()['c'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -55,6 +122,7 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
     .modal-backdrop { backdrop-filter:blur(4px); }
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     .modal-box { animation:fadeUp .25s ease; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(1); opacity:1; cursor:pointer; }
   </style>
 </head>
 <body class="font-sans flex min-h-screen">
@@ -75,11 +143,12 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
     <div class="text-xs text-gray-600 tracking-widest uppercase px-3 mb-2">Menu Utama</div>
     <?php
     $nav = [
-        ['href'=>'admin_dashboard.php','icon'=>'📊','label'=>'Dashboard',       'badge'=>null,'active'=>true],
-      ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null,'active'=>false],
-      ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>3,   'active'=>false],
-      ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,'active'=>false],
-      ['href'=>'admin_laporan.php',  'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
+      ['href'=>'admin_dashboard.php','icon'=>'📊','label'=>'Dashboard',       'badge'=>null,    'active'=>false],
+      ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null,    'active'=>false],
+      ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>$pending,'active'=>false],
+      ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,    'active'=>true],
+      ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$pending,'active'=>false],
+      ['href'=>'laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,    'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"
@@ -118,146 +187,236 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
       <p class="text-xs text-gray-500"><?= $today_str ?></p>
     </div>
     <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 rounded-lg px-3 py-2 border border-white/5 text-sm text-gray-500"
-           style="background:#1a1a1a; width:220px">
+      <div class="flex items-center gap-2 rounded-lg px-3 py-2 border border-white/5 text-sm text-gray-500" style="background:#1a1a1a; width:220px">
         <span>🔍</span>
-        <input type="text" placeholder="Cari booking, lapangan…" class="bg-transparent outline-none text-white text-xs w-full placeholder-gray-600" />
+        <input type="text" id="searchInput" placeholder="Cari lapangan…" class="bg-transparent outline-none text-white text-xs w-full placeholder-gray-600"
+               oninput="filterFields(this.value)" />
       </div>
       <div class="relative w-9 h-9 rounded-lg flex items-center justify-center border border-white/5 cursor-pointer hover:bg-white/5 transition text-base" style="background:#1a1a1a">
         🔔<div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-brand-red rounded-full border border-neutral-800"></div>
       </div>
-      <div class="w-9 h-9 rounded-lg flex items-center justify-center border border-white/5 cursor-pointer hover:bg-white/5 transition text-base" style="background:#1a1a1a">❓</div>
     </div>
   </header>
 
   <!-- PAGE CONTENT -->
   <main class="p-7 flex-1">
 
+    <?php if ($msg): ?>
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+      ✅ <?= htmlspecialchars($msg) ?>
+    </div>
+    <?php endif; ?>
+
     <div class="flex items-center justify-between mb-6">
-      <div class="text-sm text-gray-500">Kelola data dan status lapangan</div>
-      <button class="bg-brand-red text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-red2 transition">
+      <div class="text-sm text-gray-500">Kelola data dan status lapangan · <span class="text-white"><?= count($fields) ?> lapangan terdaftar</span></div>
+      <button onclick="openAddModal()" class="bg-brand-red text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-red2 transition">
         + Tambah Lapangan
       </button>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <?php foreach ($fields as $f): ?>
-      <div class="card-hover rounded-xl border border-white/5 overflow-hidden cursor-pointer" style="background:#1c1c1c">
+    <!-- FIELD CARDS -->
+    <div id="fieldGrid" class="grid grid-cols-2 gap-4">
+      <?php foreach ($fields as $f):
+        $icon  = $court_icons[$f['jenis']] ?? '🏟️';
+        $color = $court_colors[$f['jenis']] ?? 'from-neutral-900 to-red-950';
+        $isActive = $f['status'] === 'tersedia';
+        $isMaint  = $f['status'] === 'maintenance';
+        // Hitung occupancy sederhana dari booking bulan ini (jam terpakai / total jam ops)
+        $r = $koneksi->query("
+            SELECT COALESCE(SUM(durasi_jam),0) as jam
+            FROM booking WHERE lapangan_id={$f['id']}
+            AND tanggal BETWEEN '$bulan_ini_awal' AND '$bulan_ini_akhir'
+            AND status IN ('selesai','dikonfirmasi')
+        ");
+        $jam_terpakai = $r->fetch_assoc()['jam'];
+        $occ = $total_jam_ops > 0 ? min(100, round($jam_terpakai / $total_jam_ops * 100)) : 0;
+      ?>
+      <div class="field-card card-hover rounded-xl border border-white/5 overflow-hidden" style="background:#1c1c1c"
+           data-name="<?= strtolower(htmlspecialchars($f['nama'])) ?>">
         <!-- Banner -->
-        <div class="h-28 relative flex items-center justify-center text-5xl bg-gradient-to-br <?= $f['color'] ?>">
-          <?= $f['icon'] ?>
+        <div class="h-28 relative flex items-center justify-center text-5xl bg-gradient-to-br <?= $color ?>">
+          <?= $icon ?>
           <div class="absolute top-3 right-3">
-            <?php if ($f['status']==='active'): ?>
+            <?php if ($isActive): ?>
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">Aktif</span>
-            <?php else: ?>
+            <?php elseif ($isMaint): ?>
               <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">Maintenance</span>
+            <?php else: ?>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30">Tidak Tersedia</span>
             <?php endif; ?>
           </div>
+          <?php if ($f['booking_hari_ini'] > 0): ?>
+          <div class="absolute bottom-2 left-3">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-black/50 text-white">
+              📅 <?= $f['booking_hari_ini'] ?> booking hari ini
+            </span>
+          </div>
+          <?php endif; ?>
         </div>
         <!-- Body -->
         <div class="p-5">
-          <div class="text-base font-bold mb-0.5"><?= $f['name'] ?></div>
-          <div class="text-xs text-gray-500 mb-4"><?= $f['type'] ?></div>
+          <div class="text-base font-bold mb-0.5"><?= htmlspecialchars($f['nama']) ?></div>
+          <div class="text-xs text-gray-500 mb-4 capitalize"><?= $f['jenis'] ?> · <?= htmlspecialchars($f['fasilitas'] ?? '-') ?></div>
+          <!-- Stats -->
           <div class="flex gap-5 mb-4">
             <div>
-              <div class="text-base font-bold"><?= $f['price'] ?></div>
+              <div class="text-base font-bold"><?= rupiahShort($f['harga_per_jam']) ?></div>
               <div class="text-xs text-gray-500">Per jam</div>
             </div>
             <div>
-              <div class="text-base font-bold <?= occColor($f['occ']) ?>"><?= $f['occ'] ?>%</div>
+              <div class="text-base font-bold <?= occColor($occ) ?>"><?= $occ ?>%</div>
               <div class="text-xs text-gray-500">Okupansi</div>
             </div>
             <div>
-              <div class="text-base font-bold"><?= $f['rating'] ?>⭐</div>
-              <div class="text-xs text-gray-500">Rating</div>
+              <div class="text-base font-bold text-white"><?= $f['booking_bulan_ini'] ?></div>
+              <div class="text-xs text-gray-500">Booking bln ini</div>
+            </div>
+            <div>
+              <div class="text-base font-bold text-green-400"><?= rupiahShort($f['pendapatan_bulan_ini']) ?></div>
+              <div class="text-xs text-gray-500">Pendapatan</div>
             </div>
           </div>
-          <div class="h-1.5 rounded-full overflow-hidden" style="background:#1a1a1a">
+          <!-- Progress bar -->
+          <div class="h-1.5 rounded-full overflow-hidden mb-4" style="background:#1a1a1a">
             <div class="h-full rounded-full transition-all"
-                 style="width:<?= $f['occ'] ?>%;
-                        background:<?= $f['occ']===0 ? '#e8192c' : ($f['occ']<60 ? '#f59e0b' : 'linear-gradient(90deg,#e8192c,#ff3344)') ?>">
+                 style="width:<?= $occ ?>%;
+                        background:<?= $occ===0 ? '#e8192c' : ($occ<60 ? '#f59e0b' : 'linear-gradient(90deg,#e8192c,#ff3344)') ?>">
             </div>
           </div>
-          <div class="flex gap-2 mt-4">
-            <button class="flex-1 text-xs py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">Edit Detail</button>
-            <button class="flex-1 text-xs py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">Lihat Jadwal</button>
-            <?php if ($f['status']==='maintenance'): ?>
-            <button class="flex-1 text-xs py-2 rounded-lg border border-green-500/30 text-green-400 hover:bg-green-500/10 transition">Aktifkan</button>
+          <!-- Action Buttons -->
+          <div class="flex gap-2">
+            <button onclick='openEditModal(<?= json_encode($f) ?>)'
+                    class="flex-1 text-xs py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">
+              ✏️ Edit Detail
+            </button>
+            <a href="admin_jadwal.php?lapangan=<?= $f['id'] ?>"
+               class="flex-1 text-xs py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition text-center no-underline">
+              📅 Lihat Jadwal
+            </a>
+            <?php if ($isMaint || $f['status'] === 'tidak_tersedia'): ?>
+            <form method="POST" class="flex-1">
+              <input type="hidden" name="action" value="toggle_status">
+              <input type="hidden" name="id" value="<?= $f['id'] ?>">
+              <input type="hidden" name="new_status" value="tersedia">
+              <button type="submit" class="w-full text-xs py-2 rounded-lg border border-green-500/30 text-green-400 hover:bg-green-500/10 transition">
+                ✅ Aktifkan
+              </button>
+            </form>
+            <?php else: ?>
+            <form method="POST" class="flex-1" onsubmit="return confirm('Set lapangan ke maintenance?')">
+              <input type="hidden" name="action" value="toggle_status">
+              <input type="hidden" name="id" value="<?= $f['id'] ?>">
+              <input type="hidden" name="new_status" value="maintenance">
+              <button type="submit" class="w-full text-xs py-2 rounded-lg border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition">
+                🔧 Maintenance
+              </button>
+            </form>
             <?php endif; ?>
           </div>
         </div>
       </div>
       <?php endforeach; ?>
+      <?php if (empty($fields)): ?>
+      <div class="col-span-2 text-center py-16 text-gray-600">
+        <div class="text-4xl mb-3">🏟️</div>
+        <div class="text-sm">Belum ada lapangan. Tambahkan lapangan pertama kamu!</div>
+      </div>
+      <?php endif; ?>
     </div>
 
   </main>
 </div>
 
 <!-- FAB -->
-<button onclick="openModal()"
+<button onclick="openAddModal()"
   class="fixed bottom-7 right-7 rounded-full bg-brand-red text-white text-2xl flex items-center justify-center shadow-lg z-40 hover:scale-110 transition-transform"
   style="width:52px;height:52px;box-shadow:0 4px 20px rgba(232,25,44,0.4)">＋</button>
 
-<!-- MODAL BOOKING -->
-<div id="modal" class="modal-backdrop fixed inset-0 bg-black/70 z-50 hidden items-center justify-center"
+<!-- ═══════════ MODAL TAMBAH/EDIT LAPANGAN ═══════════ -->
+<div id="lapanganModal" class="modal-backdrop fixed inset-0 bg-black/70 z-50 hidden items-center justify-center"
      onclick="if(event.target===this)closeModal()">
-  <div class="modal-box rounded-2xl p-7 w-[480px] max-w-[95vw] border border-white/5" style="background:#1c1c1c">
-    <div class="font-display text-2xl tracking-widest mb-1">Tambah Booking</div>
-    <div class="text-xs text-gray-500 mb-6">Buat reservasi lapangan baru</div>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Nama Pelanggan</label>
-        <input type="text" placeholder="Nama lengkap" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
+  <div class="modal-box rounded-2xl p-7 w-[500px] max-w-[95vw] border border-white/5" style="background:#1c1c1c">
+    <div id="modalTitle" class="font-display text-2xl tracking-widest mb-1">Tambah Lapangan</div>
+    <div class="text-xs text-gray-500 mb-5">Isi detail lapangan di bawah</div>
+    <form method="POST" id="lapanganForm">
+      <input type="hidden" name="action" id="formAction" value="tambah">
+      <input type="hidden" name="id"     id="formId"     value="">
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-xs text-gray-500">Nama Lapangan</label>
+          <input type="text" name="nama" id="fNama" required placeholder="cth: Arena A"
+                 class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-gray-500">Jenis Lapangan</label>
+          <select name="jenis" id="fJenis" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
+            <option value="sintetis">Sintetis</option>
+            <option value="vinyl">Vinyl</option>
+            <option value="rumput">Rumput</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-gray-500">Harga per Jam (Rp)</label>
+          <input type="number" name="harga_per_jam" id="fHarga" required placeholder="cth: 140000" min="0"
+                 class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
+        </div>
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-xs text-gray-500">Fasilitas</label>
+          <input type="text" name="fasilitas" id="fFasilitas" placeholder="cth: AC, Toilet, Parkir"
+                 class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
+        </div>
+        <div class="flex flex-col gap-1.5 col-span-2">
+          <label class="text-xs text-gray-500">Status</label>
+          <select name="status" id="fStatus" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
+            <option value="tersedia">Tersedia</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="tidak_tersedia">Tidak Tersedia</option>
+          </select>
+        </div>
       </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">No. WhatsApp</label>
-        <input type="text" placeholder="08xxxxxxxxxx" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
+      <div class="flex gap-2.5 mt-2">
+        <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-gray-400 text-sm hover:bg-white/5 transition">Batal</button>
+        <button type="submit" class="flex-[2] py-2.5 rounded-lg bg-brand-red text-white text-sm font-semibold hover:bg-brand-red2 transition">✓ Simpan</button>
       </div>
-      <div class="flex flex-col gap-1.5 col-span-2">
-        <label class="text-xs text-gray-500 tracking-wide">Pilih Lapangan</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <option>Arena A (Indoor · Rp 140rb/jam)</option>
-          <option>Arena B (Indoor · Rp 160rb/jam)</option>
-          <option>East Wing 1 (Outdoor · Rp 100rb/jam)</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Tanggal</label>
-        <input type="date" value="<?= date('Y-m-d') ?>" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a; color-scheme:dark" />
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Jam Mulai</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <?php foreach(['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'] as $h): ?>
-          <option <?= $h==='18:00'?'selected':'' ?>><?= $h ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Durasi</label>
-        <select class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a">
-          <option>1 Jam</option><option selected>2 Jam</option><option>3 Jam</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs text-gray-500 tracking-wide">Catatan</label>
-        <input type="text" placeholder="Opsional" class="rounded-lg px-3 py-2.5 text-sm text-white border border-white/5 outline-none focus:border-brand-red transition" style="background:#1a1a1a" />
-      </div>
-    </div>
-    <div class="flex justify-between items-center rounded-lg px-4 py-3 text-sm mt-1" style="background:#1a1a1a">
-      <span class="text-gray-500">Estimasi Total</span>
-      <span class="font-bold text-green-400">Rp 280.000</span>
-    </div>
-    <div class="flex gap-2.5 mt-5">
-      <button onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-gray-400 text-sm hover:bg-white/5 transition">Batal</button>
-      <button onclick="closeModal()" class="flex-[2] py-2.5 rounded-lg bg-brand-red text-white text-sm font-semibold hover:bg-brand-red2 transition">✓ Buat Booking</button>
-    </div>
+    </form>
   </div>
 </div>
 
 <script>
-function openModal() { const m=document.getElementById('modal'); m.classList.remove('hidden'); m.classList.add('flex'); }
-function closeModal() { const m=document.getElementById('modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'Tambah Lapangan';
+  document.getElementById('formAction').value = 'tambah';
+  document.getElementById('formId').value = '';
+  document.getElementById('fNama').value = '';
+  document.getElementById('fJenis').value = 'sintetis';
+  document.getElementById('fHarga').value = '';
+  document.getElementById('fFasilitas').value = '';
+  document.getElementById('fStatus').value = 'tersedia';
+  const m = document.getElementById('lapanganModal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+function openEditModal(f) {
+  document.getElementById('modalTitle').textContent = 'Edit Lapangan';
+  document.getElementById('formAction').value = 'edit';
+  document.getElementById('formId').value = f.id;
+  document.getElementById('fNama').value = f.nama;
+  document.getElementById('fJenis').value = f.jenis;
+  document.getElementById('fHarga').value = f.harga_per_jam;
+  document.getElementById('fFasilitas').value = f.fasilitas || '';
+  document.getElementById('fStatus').value = f.status;
+  const m = document.getElementById('lapanganModal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeModal() {
+  const m = document.getElementById('lapanganModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+function filterFields(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.field-card').forEach(card => {
+    card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+  });
+}
 </script>
 </body>
 </html>

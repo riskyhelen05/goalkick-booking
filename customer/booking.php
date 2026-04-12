@@ -28,7 +28,7 @@ function uploadBukti($file) {
     if ($file['error'] !== UPLOAD_ERR_OK) return ['ok'=>false,'msg'=>'Error upload file.'];
     $fn = 'bukti_'.uniqid().'.'.$ext;
     if (!move_uploaded_file($file['tmp_name'], $dir.$fn)) return ['ok'=>false,'msg'=>'Gagal menyimpan file.'];
-    return ['ok'=>true,'url'=>'uploads/bukti/'.$fn];
+    return ['ok'=>true,'url'=>$fn];
 }
 
 // ── HANDLE SUBMIT ─────────────────────────────────────────────────────────

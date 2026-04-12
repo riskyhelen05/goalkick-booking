@@ -171,8 +171,8 @@ $nextDate = date('Y-n', strtotime("$awal +1 month"));
       ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null, 'active'=>false],
       ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>3,    'active'=>false],
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null, 'active'=>false],
-      ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>null, 'active'=>false],
-      ['href'=>'laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null, 'active'=>true],
+      ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>null, 'active'=>false],
+      ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null, 'active'=>true],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

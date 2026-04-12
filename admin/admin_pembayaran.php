@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        header('Location: pembayaran.php?msg=' . $action);
+        header('Location: admin_pembayaran.php?msg=' . $action);
         exit;
     }
 }
@@ -146,8 +146,8 @@ function metodeIcon($m) {
       ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null,'active'=>false],
       ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>3,   'active'=>false],
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,'active'=>false],
-      ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$counts['pending'],'active'=>true],
-      ['href'=>'laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
+      ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$counts['pending'],'active'=>true],
+      ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"
@@ -298,10 +298,10 @@ function metodeIcon($m) {
               </td>
               <td class="px-5 py-4">
                 <?php if ($r['bukti_url']): ?>
-                <button onclick="showBukti('<?= htmlspecialchars($r['bukti_url']) ?>')"
-                        class="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition">
-                  🖼 Lihat Foto
-                </button>
+<button onclick="showBukti('../uploads/bukti/<?= htmlspecialchars($r['bukti_url']) ?>')"
+    class="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20">
+    📄 Lihat Foto
+</button>
                 <?php else: ?>
                 <span class="text-xs text-gray-600">Tidak ada</span>
                 <?php endif; ?>

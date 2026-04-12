@@ -147,8 +147,8 @@ $pending = $r->fetch_assoc()['c'];
       ['href'=>'admin_jadwal.php',   'icon'=>'📅','label'=>'Jadwal Lapangan', 'badge'=>null,    'active'=>false],
       ['href'=>'admin_booking.php',  'icon'=>'📋','label'=>'Semua Booking',   'badge'=>$pending,'active'=>false],
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,    'active'=>true],
-      ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$pending,'active'=>false],
-      ['href'=>'laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,    'active'=>false],
+      ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$pending,'active'=>false],
+      ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,    'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

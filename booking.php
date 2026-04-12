@@ -1,5 +1,16 @@
 <?php
+session_start();
 include 'koneksi.php';
+
+// cek apakah user sudah login
+if(!isset($_SESSION['user_id'])){
+    header("Location: login.php");
+    exit;
+}
+
+// ambil data user dari session
+$user_id = $_SESSION['user_id'];
+$nama_user = $_SESSION['nama'];
 
 // ambil data booking
 $bookings = [];

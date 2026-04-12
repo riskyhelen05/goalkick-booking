@@ -122,6 +122,7 @@ while ($row = mysqli_fetch_assoc($query)) {
     <a href="/goalkick-booking/booking.php" style="color:white;">Booking</a>
     <a href="/goalkick-booking/riwayat.php" style="color:white;">Riwayat</a>
     <a href="/goalkick-booking/notifikasi.php" style="color:white;">Notifikasi</a>
+    <a href="logout.php" onclick="return confirm('Yakin ingin logout?')">Logout</a>
 </nav>
 
 <div class="container">

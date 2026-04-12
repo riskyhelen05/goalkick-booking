@@ -7,7 +7,6 @@ if (isset($_SESSION['user_id'])) {
     header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'customer/booking.php'));
     exit;
 }
- 
 // ── Ambil email dari cookie (fitur "Ingat Saya") ──────────────────────────
 $remember_email = isset($_COOKIE['remember_user']) ? htmlspecialchars($_COOKIE['remember_user']) : '';
  

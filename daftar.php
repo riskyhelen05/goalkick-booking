@@ -1,32 +1,87 @@
 <?php
 session_start();
-
-$error = '';
-$success = '';
-$errors = [];
-
+require_once 'koneksi.php';   // pastikan koneksi.php satu folder
+ 
+$errors  = [];
+$success = false;
+ 
+// Simpan nilai POST agar form tidak kosong saat ada error
+$old = [
+    'nama'  => '',
+    'no_wa' => '',
+    'email' => '',
+];
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama     = trim($_POST['nama'] ?? '');
-    $no_wa    = trim($_POST['no_wa'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $konfirmasi = $_POST['konfirmasi'] ?? '';
-    $role     = $_POST['role'] ?? 'customer';
-    $setuju   = isset($_POST['setuju']);
-
-    if (empty($nama))        $errors[] = 'Nama lengkap wajib diisi.';
-    if (empty($no_wa))       $errors[] = 'Nomor WhatsApp wajib diisi.';
-    if (empty($email))       $errors[] = 'Email wajib diisi.';
-    if (strlen($password) < 8) $errors[] = 'Password minimal 8 karakter.';
-    if ($password !== $konfirmasi) $errors[] = 'Konfirmasi password tidak cocok.';
-    if (!$setuju)            $errors[] = 'Kamu harus menyetujui syarat & ketentuan.';
-
+ 
+    // ── 1. Ambil & sanitasi input ──────────────────────────────
+    $nama       = trim($_POST['nama']       ?? '');
+    $no_wa      = trim($_POST['no_wa']      ?? '');
+    $email      = trim($_POST['email']      ?? '');
+    $password   = $_POST['password']        ?? '';
+    $konfirmasi = $_POST['konfirmasi']      ?? '';
+    $setuju     = isset($_POST['setuju']);
+ 
+    $old = compact('nama', 'no_wa', 'email');
+ 
+    // ── 2. Validasi ────────────────────────────────────────────
+    if (empty($nama))
+        $errors[] = 'Nama lengkap wajib diisi.';
+ 
+    if (empty($no_wa))
+        $errors[] = 'Nomor WhatsApp wajib diisi.';
+    elseif (!preg_match('/^[0-9+\-\s]{8,20}$/', $no_wa))
+        $errors[] = 'Format nomor WhatsApp tidak valid.';
+ 
+    if (empty($email))
+        $errors[] = 'Email wajib diisi.';
+    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL))
+        $errors[] = 'Format email tidak valid.';
+ 
+    if (strlen($password) < 8)
+        $errors[] = 'Password minimal 8 karakter.';
+ 
+    if ($password !== $konfirmasi)
+        $errors[] = 'Konfirmasi password tidak cocok.';
+ 
+    if (!$setuju)
+        $errors[] = 'Kamu harus menyetujui syarat & ketentuan.';
+ 
+    // ── 3. Cek email duplikat (hanya jika belum ada error) ─────
     if (empty($errors)) {
-        // TODO: Simpan ke database
-        // $hashed = password_hash($password, PASSWORD_BCRYPT);
-        // INSERT INTO users (nama, no_whatsapp, email, password, role) VALUES (...)
-        $success = 'Akun berhasil dibuat! Silakan masuk.';
+        $stmt = $koneksi->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $stmt->store_result();
+ 
+        if ($stmt->num_rows > 0) {
+            $errors[] = 'Email sudah terdaftar. Silakan gunakan email lain atau masuk.';
+        }
+        $stmt->close();
     }
+ 
+    // ── 4. Simpan ke database ──────────────────────────────────
+    if (empty($errors)) {
+        $hashed = password_hash($password, PASSWORD_BCRYPT);
+        $role   = 'pelanggan';   // default role sesuai ENUM di tabel users
+ 
+        $stmt = $koneksi->prepare(
+            'INSERT INTO users (nama, no_whatsapp, email, password, role)
+             VALUES (?, ?, ?, ?, ?)'
+        );
+        $stmt->bind_param('sssss', $nama, $no_wa, $email, $hashed, $role);
+ 
+        if ($stmt->execute()) {
+            $success = true;
+            $old     = ['nama' => '', 'no_wa' => '', 'email' => '']; // reset form
+        } else {
+            error_log('Insert user error: ' . $stmt->error);
+            $errors[] = 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.';
+        }
+        $stmt->close();
+    }
+ 
+    $koneksi->close();
 }
 ?>
 <!DOCTYPE html>

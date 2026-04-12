@@ -14,7 +14,7 @@ $nama_user = $_SESSION['nama'];
 
 // ambil data booking
 $bookings = [];
-$q = mysqli_query($koneksi,"SELECT * FROM booking");
+$q = mysqli_query($koneksi,"SELECT * FROM booking WHERE user_id='$user_id'");
 while($b=mysqli_fetch_assoc($q)){
     $bookings[]=$b;
 }
@@ -51,6 +51,12 @@ body{background:#0a0a0a;color:white}
 </head>
 
 <body class="p-6">
+
+<nav class="flex gap-6 mb-6 text-white">
+    <a href="/goalkick-booking/booking.php" class="hover:text-red-500">Booking</a>
+    <a href="/goalkick-booking/riwayat.php" class="hover:text-red-500">Riwayat</a>
+    <a href="/goalkick-booking/notifikasi.php" class="hover:text-red-500">Notifikasi</a>
+</nav>
 
 <h1 class="text-3xl font-bold text-red-500 mb-6">SMART FUTSAL</h1>
 
@@ -305,8 +311,51 @@ ${buktiFile?`Bukti: ${buktiFile.name}`:''}
 }
 
 function selesaiBooking(){
-alert("Booking berhasil!");
-window.location.href = "riwayat.php";
+
+let dur = document.getElementById("durasi").value;
+
+let jam_mulai = jam + ":00:00";
+let jam_selesai = (parseInt(jam)+parseInt(dur)) + ":00:00";
+let total = harga * dur;
+
+// mapping lapangan ke id
+let lapangan_id = 1;
+if(lap=="Lapangan B") lapangan_id=2;
+if(lap=="Lapangan C") lapangan_id=3;
+if(lap=="Lapangan D") lapangan_id=4;
+
+// DEBUG
+console.log({
+lapangan_id,
+tanggal: tgl.value,
+jam_mulai,
+jam_selesai,
+durasi: dur,
+harga,
+total
+});
+
+fetch("proses_booking.php",{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+body:new URLSearchParams({
+lapangan_id:lapangan_id,
+tanggal:tgl.value,
+jam_mulai:jam_mulai,
+jam_selesai:jam_selesai,
+durasi:dur,
+harga:harga,
+total:total
+})
+})
+.then(res=>res.text())
+.then(res=>{
+console.log(res);
+alert(res);
+window.location.href="riwayat.php";
+});
 }
 
 </script>

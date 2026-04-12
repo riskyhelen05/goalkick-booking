@@ -3,10 +3,10 @@ session_start();           // ← cukup SEKALI di paling atas
 include 'koneksi.php';
  
 // ── Jika sudah login, langsung redirect sesuai role ──────────────────────
-//if (isset($_SESSION['user_id'])) {
-  //  header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'customer/booking.php'));
-    //exit;
-//}
+if (isset($_SESSION['user_id'])) {
+    header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'customer/booking.php'));
+    exit;
+}
  
 // ── Ambil email dari cookie (fitur "Ingat Saya") ──────────────────────────
 $remember_email = isset($_COOKIE['remember_user']) ? htmlspecialchars($_COOKIE['remember_user']) : '';

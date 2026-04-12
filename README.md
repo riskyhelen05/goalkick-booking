@@ -1,66 +1,77 @@
-# ⚽ GoalKick - Sistem Booking Lapangan Futsal
+# ⚽ Website Booking Lapangan Futsal
 
-## 📖 Deskripsi
-
-GoalKick adalah website sederhana untuk melakukan pemesanan (booking) lapangan futsal secara online.
-Sistem ini dibuat untuk membantu pengguna melihat jadwal lapangan yang tersedia, melakukan reservasi, serta menghindari bentrok jadwal pemesanan.
-
-Website ini dikembangkan sebagai tugas project mata kuliah sistem informasi / pemrograman berbasis web.
+Aplikasi ini adalah sistem booking lapangan futsal berbasis web yang dibuat menggunakan **PHP dan MySQL**. Sistem ini memungkinkan pengguna untuk melakukan pemesanan lapangan secara online, melihat jadwal yang tersedia, serta menerima notifikasi booking.
 
 ---
 
-## ✨ Fitur Utama
+## 🚀 Fitur Utama
 
-* 📅 Booking lapangan futsal secara online
-* ⏱ Perhitungan durasi booking otomatis
-* 📊 Preview slot waktu yang sudah dibooking
-* 📱 Tampilan responsive (desktop & mobile)
-* ⚡ Interface modern menggunakan Tailwind CSS
+### 👤 User / Pelanggan
+- Registrasi dan login
+- Melihat daftar lapangan
+- Booking lapangan berdasarkan tanggal dan jam
+- Melihat riwayat booking
+- Notifikasi status booking
+- Logout akun
 
----
-
-## 🛠 Teknologi yang Digunakan
-
-* HTML
-* Tailwind CSS
-* JavaScript
-
----
-
-## 📂 Struktur Project
-
-```
-GoalKick/
-│
-├── index.html      # Halaman utama (Landing Page)
-├── booking.html    # Halaman form booking lapangan
-├── script.js       # Logika sistem booking
-└── README.md       # Dokumentasi project
-```
+### 🛠️ Admin (jika ada)
+- Manajemen data lapangan
+- Melihat semua booking
+- Konfirmasi / batalkan booking
+- Manajemen user
 
 ---
 
-## ▶ Cara Menjalankan Project
-
-1. Download atau clone repository ini
-2. Buka folder project
-3. Jalankan file **index.html** menggunakan browser
-4. Pilih menu **Booking** untuk melakukan reservasi lapangan
-
----
-
-## 👥 Anggota Kelompok
-
-1. Helen Risky Dwi Wahyuni   (24082010054)
-2. Andrey Parinding          (24082010076)
-3. Muhammad Yahya Zahid      (24082010086)
+## 🧠 Fitur Sistem
+- Validasi jadwal agar tidak terjadi double booking
+- Sistem status booking (pending / approved / cancelled)
+- Notifikasi otomatis setelah booking berhasil
+- Session login user
+- Proteksi halaman (harus login)
 
 ---
 
-## 🔗 Link Repository
-
-Tambahkan link repository GitHub kelompok di sini.
+## 💻 Teknologi yang Digunakan
+- PHP (Native)
+- MySQL
+- HTML, CSS
+- Bootstrap (opsional)
+- XAMPP (local server)
 
 ---
 
-© 2026 GoalKick
+## ⚙️ Cara Instalasi
+
+1. Clone repository ini
+   https://github.com/riskyhelen05/goalkick-booking
+
+2. Import database MySQL
+- buka phpMyAdmin
+- import file `.sql`
+
+3. Jalankan XAMPP
+- Start Apache & MySQL
+
+4. Buka browser
+   http://localhost/goalkick-booking
+
+---
+
+## 🔐 Validasi Sistem
+- Jadwal yang sudah dibooking tidak bisa dipesan ulang
+- User harus login sebelum booking
+- Session otomatis mengamankan halaman
+
+---
+
+## 👨‍💻 Developer
+- Nama Anggota Kelompok:
+   1. Helen Risky Dwi Wahyuni (24082010054)
+   2. Andrey Parinding        (24082010076)
+   3. Muhammad Yahya Zahid    (24082010086)
+- Project: FP Pemrograman Web
+
+---
+
+## 📌 Catatan
+Project ini dibuat untuk pembelajaran dan pengembangan sistem booking sederhana berbasis web.

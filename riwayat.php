@@ -2,15 +2,18 @@
 session_start();
 include 'koneksi.php';
 
-// sementara untuk testing
-$_SESSION['user_id'] = 1;
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
 
-$user_id = $_SESSION['user_id'];
+$user_id = intval($_SESSION['user_id']);
 
 $query = mysqli_query($koneksi, "
     SELECT b.*, l.nama as nama_lapangan
     FROM booking b
     LEFT JOIN lapangan l ON b.lapangan_id = l.id
+    WHERE b.user_id = '$user_id'
     ORDER BY b.tanggal DESC
 ");
 
@@ -114,6 +117,12 @@ while ($row = mysqli_fetch_assoc($query)) {
     </style>
 </head>
 <body>
+    
+<nav style="display:flex; gap:20px; padding:15px; background:#111;">
+    <a href="/goalkick-booking/booking.php" style="color:white;">Booking</a>
+    <a href="/goalkick-booking/riwayat.php" style="color:white;">Riwayat</a>
+    <a href="/goalkick-booking/notifikasi.php" style="color:white;">Notifikasi</a>
+</nav>
 
 <div class="container">
     <h2>⚽ Riwayat Booking</h2>

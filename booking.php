@@ -48,8 +48,6 @@ body{background:#0a0a0a;color:white}
 <!-- KIRI -->
 <div class="md:col-span-2 space-y-6">
 
-<form action="proses_booking.php" method="POST" enctype="multipart/form-data">
-
 <!-- DATA -->
 <div class="card p-5 rounded">
 <input id="nama" placeholder="Nama Penyewa" class="w-full mb-2 p-3 bg-black border rounded">

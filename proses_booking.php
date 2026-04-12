@@ -1,128 +1,82 @@
 <?php
 session_start();
-include 'koneksi.php'; // sesuaikan path
+include 'koneksi.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
+    die("login dulu");
 }
 
 $user_id = $_SESSION['user_id'];
 
-// AMBIL DATA FORM (SESUAIKAN DENGAN HTML)
-$nama      = $_POST['nama'] ?? '';
-$no_hp     = $_POST['wa'] ?? '';
-$lapangan  = $_POST['lapangan'] ?? '';
-$tanggal   = $_POST['tanggal'] ?? '';
-$jam_mulai = $_POST['jam'] ?? '';
-$durasi    = intval($_POST['durasi_val'] ?? 0);
-$metode    = $_POST['metode'] ?? '';
-$tipe      = $_POST['tipe'] ?? '';
-
 // VALIDASI
-if (!$nama || !$no_hp || !$lapangan || !$tanggal || !$jam_mulai || !$durasi) {
-    die("Data tidak lengkap!");
+if(
+!isset($_POST['lapangan_id']) ||
+!isset($_POST['tanggal']) ||
+!isset($_POST['jam_mulai']) ||
+!isset($_POST['jam_selesai']) ||
+!isset($_POST['durasi']) ||
+!isset($_POST['harga']) ||
+!isset($_POST['total'])
+){
+    header("Location: booking.php");
+    exit;
 }
 
-// ── KONVERSI LAPANGAN ──
-$map_lap = [
-    'Lapangan A' => 'A',
-    'Lapangan B' => 'B',
-    'Lapangan C' => 'C',
-    'Lapangan D' => 'D'
-];
+$lapangan_id = $_POST['lapangan_id'];
+$tanggal     = $_POST['tanggal'];
+$jam_mulai   = $_POST['jam_mulai'];
+$jam_selesai = $_POST['jam_selesai'];
+$durasi      = $_POST['durasi'];
+$harga       = $_POST['harga'];
+$total       = $_POST['total'];
 
-$lap_kode = $map_lap[$lapangan] ?? 'A';
+$kode_booking = "BK" . time();
 
-// ── HARGA ──
-$harga_list = [
-    'A' => 180000,
-    'B' => 160000,
-    'C' => 130000,
-    'D' => 100000
-];
-
-$harga = $harga_list[$lap_kode];
-
-// ── HITUNG JAM ──
-$start = strtotime("$tanggal $jam_mulai:00");
-$end   = $start + ($durasi * 3600);
-
-$jam_mulai_db   = date('H:i:s', $start);
-$jam_selesai_db = date('H:i:s', $end);
-
-if ($jam_selesai_db > '22:00:00') {
-    die("Jam melebihi operasional!");
-}
-
-// ── CEK BENTROK (ANTI DOUBLE BOOKING) ──
-$cek = $koneksi->query("
-    SELECT id FROM booking
-    WHERE lapangan_id = '$lap_kode'
-    AND tanggal = '$tanggal'
-    AND (
-        jam_mulai < '$jam_selesai_db'
-        AND jam_selesai > '$jam_mulai_db'
-    )
+$cek = mysqli_query($koneksi,"
+SELECT * FROM booking
+WHERE lapangan_id = '$lapangan_id'
+AND tanggal = '$tanggal'
+AND (
+    (jam_mulai < '$jam_selesai' AND jam_selesai > '$jam_mulai')
+)
 ");
 
-if ($cek->num_rows > 0) {
-    die("Jadwal sudah dibooking!");
+if(mysqli_num_rows($cek) > 0){
+    echo "Jadwal sudah dibooking";
+    exit;
 }
 
-// ── TOTAL ──
-$total = $harga * $durasi;
-$bayar = ($tipe == 'DP') ? $total * 0.5 : $total;
+// ✅ INSERT BOOKING
+$query = "INSERT INTO booking 
+(kode_booking, user_id, lapangan_id, tanggal, jam_mulai, jam_selesai, durasi_jam, harga_saat_booking, total_harga, status)
+VALUES 
+('$kode_booking', '$user_id', '$lapangan_id', '$tanggal', '$jam_mulai', '$jam_selesai', '$durasi', '$harga', '$total', 'pending')";
 
-// ── UPLOAD BUKTI ──
-$bukti = '';
-if (!empty($_FILES['bukti']['name'])) {
+if (mysqli_query($koneksi, $query)) {
 
-    $ext = strtolower(pathinfo($_FILES['bukti']['name'], PATHINFO_EXTENSION));
-    $allowed = ['jpg','jpeg','png','webp'];
+    $booking_id = mysqli_insert_id($koneksi);
 
-    if (!in_array($ext, $allowed)) {
-        die("Format harus JPG/PNG/WEBP!");
-    }
+    // Ambil nama lapangan
+    $lap = mysqli_query($koneksi, "SELECT nama FROM lapangan WHERE id='$lapangan_id'");
+    $lapangan = mysqli_fetch_assoc($lap);
+    $nama_lapangan = $lapangan['nama'];
 
-    if ($_FILES['bukti']['size'] > 5 * 1024 * 1024) {
-        die("Max 5MB!");
-    }
+    // Format tanggal & jam
+    $tgl = date('d M Y', strtotime($tanggal));
+    $jam = substr($jam_mulai,0,5);
 
-    $bukti = 'bukti_' . time() . '.' . $ext;
-    move_uploaded_file($_FILES['bukti']['tmp_name'], "upload/" . $bukti);
+    // INSERT NOTIFIKASI
+    mysqli_query($koneksi, "
+        INSERT INTO notifikasi 
+        (user_id, booking_id, judul, pesan, tipe)
+        VALUES 
+        ('$user_id', '$booking_id', 
+        '🎉 Booking Berhasil Dibuat!', 
+        'Booking $kode_booking di $nama_lapangan pada $tgl jam $jam berhasil dibuat. Menunggu konfirmasi admin.',
+        'success')
+    ");
+
+    echo "✅ BOOKING + NOTIFIKASI BERHASIL";
+} else {
+    echo "❌ ERROR: " . mysqli_error($koneksi);
 }
-
-// ── KODE BOOKING ──
-$kode = "BK" . date('YmdHis');
-
-// ── INSERT BOOKING ──
-$koneksi->query("
-    INSERT INTO booking (
-        user_id, kode_booking, lapangan_id,
-        nama_penyewa, no_hp,
-        tanggal, jam_mulai, jam_selesai,
-        durasi_jam, total_harga, status
-    ) VALUES (
-        '$user_id', '$kode', '$lap_kode',
-        '$nama', '$no_hp',
-        '$tanggal', '$jam_mulai_db', '$jam_selesai_db',
-        '$durasi', '$total', 'pending'
-    )
-");
-
-$booking_id = $koneksi->insert_id;
-
-// ── INSERT PEMBAYARAN ──
-$koneksi->query("
-    INSERT INTO pembayaran (
-        booking_id, metode, tipe, jumlah, bukti, status
-    ) VALUES (
-        '$booking_id', '$metode', '$tipe', '$bayar', '$bukti', 'pending'
-    )
-");
-
-// ── REDIRECT ──
-header("Location: riwayat.php?success=1");
-exit;
-?>

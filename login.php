@@ -1,37 +1,83 @@
 <?php
+session_start();           // ← cukup SEKALI di paling atas
 include 'koneksi.php';
-session_start();
-include 'koneksi.php';
-
-$error = "";
-
-// Ambil cookie
-$remember_email = "";
-if(isset($_COOKIE['remember_user'])){
-    $remember_email = $_COOKIE['remember_user'];
+ 
+// ── Jika sudah login, langsung redirect sesuai role ──────────────────────
+if (isset($_SESSION['user_id'])) {
+    header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'customer/booking.php'));
+    exit;
 }
-
-if(isset($_POST['submit'])){
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    $query = "SELECT * FROM users WHERE email='$email' AND password='$password'";
-    $result = mysqli_query($koneksi, $query);
-
-    if(mysqli_num_rows($result) > 0){
-        $_SESSION['email'] = $email;
-
-        // REMEMBER ME
-        if(isset($_POST['remember'])){
-            setcookie("remember_user", $email, time() + (86400 * 7)); // 7 hari
-        } else {
-            $error = "Password salah!";
-        }
-
-        header("Location: customer/booking.php");
-        exit;
+ 
+// ── Ambil email dari cookie (fitur "Ingat Saya") ──────────────────────────
+$remember_email = isset($_COOKIE['remember_user']) ? htmlspecialchars($_COOKIE['remember_user']) : '';
+ 
+$error = '';
+ 
+// ── Proses form login ─────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+ 
+    $email    = trim($_POST['email']    ?? '');
+    $password = trim($_POST['password'] ?? '');
+ 
+    if (!$email || !$password) {
+        $error = 'Email dan password wajib diisi.';
     } else {
-        echo "<script>alert('email atau Password salah!');</script>";
+ 
+        // Pakai prepared statement — aman dari SQL injection
+        $stmt = $koneksi->prepare("SELECT id, nama, email, password, role FROM users WHERE email = ? LIMIT 1");
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+ 
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+ 
+            /*
+             * Jika password di DB sudah di-hash dengan password_hash(),
+             * gunakan:  password_verify($password, $user['password'])
+             *
+             * Jika masih plain-text (seperti proyek kamu sekarang),
+             * gunakan:  $password === $user['password']
+             *
+             * Ganti baris di bawah sesuai kondisi DB kamu.
+             */
+            $passwordValid = ($password === $user['password']);
+            // $passwordValid = password_verify($password, $user['password']); // ← aktifkan kalau sudah hash
+ 
+            if ($passwordValid) {
+ 
+                // ── Simpan ke SESSION ────────────────────────────────────
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['nama']    = $user['nama'];
+                $_SESSION['email']   = $user['email'];
+                $_SESSION['role']    = $user['role'];   // 'admin' atau 'pelanggan'
+ 
+                // ── Tangani Cookie "Ingat Saya" ──────────────────────────
+                if (isset($_POST['remember'])) {
+                    // Simpan email selama 7 hari
+                    setcookie('remember_user', $email, time() + (86400 * 7), '/', '', false, true);
+                } else {
+                    // Hapus cookie kalau tidak centang
+                    setcookie('remember_user', '', time() - 3600, '/');
+                }
+ 
+                // ── Redirect berdasarkan role ────────────────────────────
+                if ($user['role'] === 'admin') {
+                    header('Location: admin/dashboard.php');
+                } else {
+                    header('Location: customer/booking.php');
+                }
+                exit;
+ 
+            } else {
+                $error = 'Email atau password salah.';
+            }
+ 
+        } else {
+            $error = 'Email atau password salah.';
+        }
+ 
+        $stmt->close();
     }
 }
 ?>

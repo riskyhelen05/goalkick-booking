@@ -1,6 +1,10 @@
 <?php
 session_start();
 include '../koneksi.php';
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php'); exit;
+}
+include '../koneksi.php';
 
 // ── FILTER PERIODE ───────────────────────────────────────────────────────
 $bulan  = isset($_GET['bulan'])  ? intval($_GET['bulan'])  : intval(date('n'));
@@ -173,6 +177,7 @@ $nextDate = date('Y-n', strtotime("$awal +1 month"));
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null, 'active'=>false],
       ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>null, 'active'=>false],
       ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null, 'active'=>true],
+      ['href'=>'../logout.php',        'icon'=>'🙏🏻','label'=>'Logout',         'badge'=>null,   'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

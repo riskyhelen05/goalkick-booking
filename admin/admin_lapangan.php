@@ -1,6 +1,10 @@
 <?php
 session_start();
 include '../koneksi.php';
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php'); exit;
+}
+include '../koneksi.php';
 
 // ── HANDLE POST: TAMBAH / EDIT / TOGGLE STATUS ────────────────────────────
 $msg = '';
@@ -149,6 +153,7 @@ $pending = $r->fetch_assoc()['c'];
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,    'active'=>true],
       ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$pending,'active'=>false],
       ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,    'active'=>false],
+      ['href'=>'../logout.php',        'icon'=>'🙏🏻','label'=>'Logout',         'badge'=>null,   'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

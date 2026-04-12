@@ -1,6 +1,9 @@
 <?php
 session_start();
 include '../koneksi.php';
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php'); exit;
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function rupiah($n) { return 'Rp ' . number_format($n, 0, ',', '.'); }
@@ -233,6 +236,7 @@ function courtBadge($status) {
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,   'active'=>false],
       ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$pending,'active'=>false],
       ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,   'active'=>false],
+      ['href'=>'../logout.php',        'icon'=>'🙏🏻','label'=>'Logout',         'badge'=>null,   'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

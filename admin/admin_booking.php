@@ -1,7 +1,10 @@
 <?php
 // ================== KONEKSI DATABASE ==================
+session_start();
 include '../koneksi.php';
-
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php'); exit;
+}
 // ================== AMBIL DATA BOOKING ==================
 $query = "
 SELECT 
@@ -142,6 +145,7 @@ $today_str = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[(int)date
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,'active'=>false],
        ['href'=>'pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>null, 'active'=>false],
       ['href'=>'admin_laporan.php',  'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
+      ['href'=>'../logout.php',        'icon'=>'🙏🏻','label'=>'Logout',         'badge'=>null,   'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

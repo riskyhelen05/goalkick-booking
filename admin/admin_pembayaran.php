@@ -1,6 +1,10 @@
 <?php
 session_start();
 include '../koneksi.php';
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../login.php'); exit;
+}
+include '../koneksi.php';
 
 // ── HANDLE KONFIRMASI / TOLAK PEMBAYARAN ────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -148,6 +152,7 @@ function metodeIcon($m) {
       ['href'=>'admin_lapangan.php', 'icon'=>'🏟️','label'=>'Data Lapangan',  'badge'=>null,'active'=>false],
       ['href'=>'admin_pembayaran.php',     'icon'=>'💳','label'=>'Pembayaran',      'badge'=>$counts['pending'],'active'=>true],
       ['href'=>'admin_laporan.php',        'icon'=>'📈','label'=>'Laporan',         'badge'=>null,'active'=>false],
+      ['href'=>'../logout.php',        'icon'=>'🙏🏻','label'=>'Logut',         'badge'=>null,   'active'=>false],
     ];
     foreach ($nav as $n): ?>
     <a href="<?= $n['href'] ?>"

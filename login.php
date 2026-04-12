@@ -4,7 +4,7 @@ include 'koneksi.php';
  
 // ── Jika sudah login, langsung redirect sesuai role ──────────────────────
 if (isset($_SESSION['user_id'])) {
-    header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/dashboard.php' : 'customer/booking.php'));
+    header('Location: ' . ($_SESSION['role'] === 'admin' ? 'admin/admin_dashboard.php' : 'booking.php'));
     exit;
 }
 // ── Ambil email dari cookie (fitur "Ingat Saya") ──────────────────────────
@@ -62,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
                 // ── Redirect berdasarkan role ────────────────────────────
                 if ($user['role'] === 'admin') {
-                    header('Location: booking.php');
+                    header('Location: admin/admin_dashboard.php');
                 } else {
-                    header('Location: customer/booking.php');
+                    header('Location: booking.php');
                 }
                 exit;
  
@@ -175,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Email -->
 <div>
 <label class="text-white/60 text-xs mb-1 uppercase">Email</label>
-<input type="email" name="email"
+<input type="email" name="email" required
 class="w-full rounded-xl px-4 py-3 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/25 transition">
 </div>
 
@@ -183,7 +183,7 @@ class="w-full rounded-xl px-4 py-3 text-sm bg-white/10 border border-white/20 te
 <div>
 <label class="text-white/60 text-xs mb-1 uppercase">Password</label>
 <div class="relative">
-<input type="password" id="password" name="password"
+<input type="password" id="password" name="password" required
 class="w-full rounded-xl px-4 py-3 text-sm bg-white/10 border border-white/20 text-white focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/25 transition">
 
 <button type="button" onclick="togglePass('password', this)"

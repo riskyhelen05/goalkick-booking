@@ -56,6 +56,7 @@ body{background:#0a0a0a;color:white}
     <a href="/goalkick-booking/booking.php" class="hover:text-red-500">Booking</a>
     <a href="/goalkick-booking/riwayat.php" class="hover:text-red-500">Riwayat</a>
     <a href="/goalkick-booking/notifikasi.php" class="hover:text-red-500">Notifikasi</a>
+    <a href="logout.php" onclick="return confirm('Yakin ingin logout?')">Logout</a>
 </nav>
 
 <h1 class="text-3xl font-bold text-red-500 mb-6">SMART FUTSAL</h1>

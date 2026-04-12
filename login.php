@@ -28,7 +28,7 @@ if(isset($_POST['submit'])){
             $error = "Password salah!";
         }
 
-        header("Location: admin/admin_dashboard.php");
+        header("Location: customer/booking.php");
         exit;
     } else {
         echo "<script>alert('email atau Password salah!');</script>";
